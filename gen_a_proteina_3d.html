@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Del gen a la proteína · Simulador visual 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --tinta:#33484A; --tinta-deep:#1F3032; --gris:#5C7472;
+  --terracota:#7CC2B9; --terracota-deep:#4C948B; --terracota-soft:#E7F6F3;
+  --salvia:#93C9B5; --salvia-deep:#5FA089; --salvia-soft:#EAF6F0;
+  --ocre:#E6A0AC; --ocre-deep:#C97686; --ocre-soft:#FBEBEE;
+  --coral:#EFA98D; --coral-deep:#D3805F; --coral-soft:#FCEFE9;
+  --arena:#F5FBFA; --arena-deep:#E7F2F1; --blanco:#FFFFFF; --radius:18px;
+  --f-display:"Fraunces",Georgia,serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--arena);color:var(--tinta);font-family:var(--f-body);line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding:26px 18px 56px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);margin:0 0 6px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,5vw,40px);line-height:1.15;margin:0 0 8px;color:var(--tinta-deep)}
+h2,h3{font-family:var(--f-display);font-weight:600;color:var(--tinta-deep);margin:0 0 8px}
+h3{font-size:20px}
+.lead{margin:0 0 18px;color:var(--gris);max-width:75ch}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--tinta);outline-offset:2px}
+.card{background:var(--blanco);border:2px solid var(--arena-deep);border-radius:var(--radius);padding:16px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+#wrap3d{position:relative;width:100%;height:540px;border-radius:12px;overflow:hidden;background:#fff;border:2px solid var(--arena-deep)}
+@media (max-width:860px){#wrap3d{height:400px}}
+#c3d{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#c3d.arrastrando{cursor:grabbing}
+#c3d.sobre{cursor:pointer}
+#tip{position:absolute;pointer-events:none;background:var(--tinta-deep);color:#fff;font-size:13px;font-weight:600;padding:4px 10px;border-radius:8px;transform:translate(12px,12px);white-space:nowrap}
+.zona{position:absolute;pointer-events:none;font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--gris);background:rgba(255,255,255,.85);padding:2px 10px;border-radius:999px;transform:translate(-50%,-50%);white-space:nowrap}
+.ayuda{position:absolute;left:12px;bottom:10px;font-size:13px;color:var(--gris);background:rgba(255,255,255,.88);padding:3px 10px;border-radius:999px;pointer-events:none}
+.controles{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.btn{font:inherit;font-weight:600;cursor:pointer;background:var(--tinta);color:#fff;border:0;border-radius:12px;padding:8px 14px}
+.btn:hover{background:var(--tinta-deep)}
+.btn.sec{background:#fff;color:var(--tinta);border:2px solid var(--arena-deep)}
+.btn.sec:hover{background:var(--arena)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.rango{flex:1 1 160px;min-width:140px;accent-color:var(--tinta)}
+.opc{display:flex;align-items:center;gap:6px;font-size:14px}
+select{font:inherit;border:2px solid var(--arena-deep);border-radius:10px;padding:5px 8px;background:#fff;color:var(--tinta)}
+.num{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);margin:0}
+.pie-paso{border-left:8px solid var(--terracota)}
+.pie-paso h2{font-size:clamp(20px,3vw,26px);margin:2px 0 6px}
+.pie-paso p{margin:0}
+#info{border-top:8px solid var(--ac,var(--terracota))}
+#info .rot{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);margin:12px 0 2px}
+#info p{margin:0}
+.aviso-paso{margin-top:12px;background:var(--coral-soft);border:2px solid var(--coral);border-radius:12px;padding:8px 12px;font-size:14px}
+.bases{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.bases span{font-family:var(--f-mono);font-weight:600;font-size:13px;padding:2px 10px;border-radius:999px;color:var(--tinta-deep)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--tinta);border:2px solid var(--arena-deep);border-radius:999px;padding:5px 12px}
+.chip:hover,.chip[aria-pressed="true"]{background:var(--arena)}
+.chip i{width:14px;height:14px;border-radius:50%;border:2px solid var(--tinta);display:inline-block}
+.nota{font-size:14px;color:var(--gris)}
+#sin3d{background:var(--coral-soft);border:2px solid var(--coral);border-radius:var(--radius);padding:16px;margin-bottom:18px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Biología del comportamiento · Clase 2 · Simulador visual 3D</p>
+  <h1>Del gen a la proteína</h1>
+  <p class="lead">Seguí el flujo de la expresión génica: la transcripción en el núcleo y la traducción en el ribosoma. <strong>Girá la escena arrastrando y tocá cualquier molécula o estructura</strong>: te dice cómo se llama, qué hace y cómo se mueve, y la muestra en movimiento.</p>
+
+  <div id="sin3d" hidden>
+    <strong>No se pudo cargar la vista 3D.</strong> Este recurso necesita conexión a internet (carga la librería gráfica) y un navegador con WebGL. Probá recargar la página o abrirla en Chrome, Edge o Firefox actualizados. Mientras tanto podés leer los pasos del proceso más abajo.
+  </div>
+
+  <div class="grid">
+    <section class="card" aria-label="Escena 3D del flujo de la expresión génica">
+      <div id="wrap3d">
+        <canvas id="c3d" role="img" aria-label="Escena 3D de una célula: el núcleo con una molécula de ADN, el ARN mensajero que sale por un poro y el ribosoma que arma una proteína. Arrastrá para girar y tocá una molécula para ver su información; también podés elegir los componentes en la lista de abajo."></canvas>
+        <div class="zona" id="lab-nuc">Núcleo</div>
+        <div class="zona" id="lab-cit">Citoplasma</div>
+        <div id="tip" hidden></div>
+        <div class="ayuda">Arrastrá para girar · rueda para acercar · tocá una molécula</div>
+      </div>
+      <div class="controles" role="group" aria-label="Controles de pasos">
+        <button type="button" class="btn sec" id="b-ini">⏮ Inicio</button>
+        <button type="button" class="btn sec" id="b-ant">◀ Anterior</button>
+        <button type="button" class="btn" id="b-play" aria-pressed="false">▶ Reproducir</button>
+        <button type="button" class="btn sec" id="b-sig">Siguiente ▶</button>
+        <input class="rango" id="rango" type="range" min="0" max="5" step="1" value="0" aria-label="Elegir paso">
+      </div>
+      <div class="controles" role="group" aria-label="Opciones de la vista">
+        <label class="opc">Velocidad
+          <select id="vel"><option value="0.6">Lenta</option><option value="1" selected>Normal</option><option value="1.6">Rápida</option></select>
+        </label>
+        <label class="opc"><input type="checkbox" id="auto"> Rotación automática</label>
+        <button type="button" class="btn sec" id="z-mas" aria-label="Acercar">＋</button>
+        <button type="button" class="btn sec" id="z-menos" aria-label="Alejar">－</button>
+        <button type="button" class="btn sec" id="b-vista">Restablecer vista</button>
+      </div>
+    </section>
+
+    <aside class="card" id="info" aria-live="polite" aria-label="Información de la molécula elegida">
+      <p class="num">Elegiste</p>
+      <h2 id="inf-n">Tocá una molécula</h2>
+      <p id="inf-f">Elegí una molécula o una estructura en la escena (o en la lista de componentes) para ver su nombre, su función y cómo se mueve.</p>
+      <p class="rot" id="inf-mt" hidden>¿Cómo se mueve?</p>
+      <p id="inf-m"></p>
+      <div class="bases" id="inf-bases" hidden>
+        <span style="background:#E6A0AC">A adenina</span><span style="background:#EFA98D">T timina</span><span style="background:#93C9B5">G guanina</span><span style="background:#7CC2B9">C citosina</span><span style="background:#F2D16B">U uracilo (solo en el ARN)</span>
+      </div>
+      <div class="aviso-paso" id="inf-aviso" hidden></div>
+      <div class="controles">
+        <button type="button" class="btn sec" id="inf-ver" hidden>Ver el movimiento</button>
+        <button type="button" class="btn sec" id="inf-ir" hidden>Ir a ese paso</button>
+      </div>
+    </aside>
+  </div>
+
+  <section class="card pie-paso" aria-live="polite">
+    <p class="num" id="num-paso"></p>
+    <h2 id="tit-paso"></h2>
+    <p id="txt-paso"></p>
+  </section>
+
+  <section class="card" aria-label="Componentes">
+    <h3>Componentes</h3>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <p class="nota">Modelo esquemático y simplificado, armado con los términos de la Clase 2 (ficha «Introducción a la Bioquímica Celular y Estructura y Composición de los Genes» y video complementario). Los tamaños, las formas y los colores son ilustrativos; el ejemplo tiene un gen de 18 nucleótidos y una proteína de 6 aminoácidos para que se pueda seguir. Los procesos de modificación del ARN mensajero no se desarrollan en la materia y no se muestran.</p>
+</main>
+
+<script>
+(function(){
+"use strict";
+var sin3d = document.getElementById("sin3d");
+var canvas = document.getElementById("c3d"), wrap = document.getElementById("wrap3d"), tip = document.getElementById("tip");
+function $(id){ return document.getElementById(id); }
+function el(tag, cls, txt){ var n=document.createElement(tag); if(cls) n.className=cls; if(txt!==undefined) n.textContent=txt; return n; }
+function clock(){ return performance.now()/1000; }
+
+/* ---------- contenido (términos de la materia) ---------- */
+var PASOS = [
+  {t:"El ADN y el gen", d:"En el núcleo de las células está el ADN: dos cadenas de nucleótidos complementarias y antiparalelas, enroscadas en una doble hélice y unidas por enlaces de hidrógeno entre las bases nitrogenadas. Un gen es una región de esa secuencia de ADN (en verde oscuro) que se transcribe a ARN y que contiene la información para fabricar una proteína."},
+  {t:"Etapa 1 · Transcripción (en el núcleo)", d:"La doble cadena de ADN se abre a la altura del gen. Los nucleótidos sueltos del núcleo se van colocando, de manera complementaria, frente a la cadena de ADN: citosina con guanina, guanina con citosina, timina con adenina y adenina con uracilo (en el ARN no hay timina, hay uracilo). Así se forma una molécula de ARN mensajero (ARNm): el transcripto. Seguimos en el «idioma de nucleótidos»."},
+  {t:"El ARN mensajero sale del núcleo", d:"El ARNm es una cadena simple. Una vez formado, sale del núcleo a través de un poro de la membrana nuclear y viaja por el citoplasma. (Antes de salir puede sufrir procesos de modificación que en esta materia no se desarrollan.)"},
+  {t:"Etapa 2 · Traducción: el ARNm llega al ribosoma", d:"En el citoplasma, el ARNm se coloca en el ribosoma, una estructura (organela) con una subunidad mayor y una subunidad menor. El ribosoma hace de escáner: el ARNm pasa a través de él, como una cinta por la cabeza de una grabadora, y el ribosoma lo lee de a tres nucleótidos: cada una de esas tripletas es un codón."},
+  {t:"El ARNt trae los aminoácidos", d:"A cada codón le corresponde un aminoácido determinado. El ARN de transferencia (ARNt) lleva el aminoácido que corresponde y el ribosoma lo va enlazando a los anteriores, en una secuencia particular. Pasamos del idioma de nucleótidos al idioma de aminoácidos."},
+  {t:"Se forma la proteína", d:"La secuencia de aminoácidos conforma una proteína, producto final de la expresión de la mayoría de los genes (acá, un ejemplo de seis aminoácidos; hay proteínas más cortas y otras muy largas). Al plegarse adquiere su forma tridimensional, que es la base de su función."}
+];
+var INFO = {
+  adn:{n:"ADN (ácido desoxirribonucleico)", c:"#33484A", paso:0, f:"Es el almacén de la información genética y la molécula que transmite esa información de las células progenitoras a las células hijas. Está formado por dos cadenas de nucleótidos complementarias y antiparalelas, enroscadas en doble hélice: el esqueleto azúcar-fosfato queda por fuera y las bases nitrogenadas hacia el interior.", m:"En la transcripción, la doble cadena se abre a la altura del gen y después se vuelve a cerrar."},
+  gen:{n:"Gen", c:"#4C948B", paso:0, f:"Es la unidad básica de la herencia: una región de la secuencia de ADN que se transcribe (al menos en parte) a una molécula de ARN. Es la mínima porción codificante de ADN, algo así como una receta para fabricar una proteína.", m:"Cuando el gen está encendido, su segmento de ADN se abre y se transcribe."},
+  basepair:{n:"Enlaces entre bases nitrogenadas", c:"#EFA98D", paso:0, f:"Las dos cadenas del ADN se mantienen unidas por enlaces de hidrógeno entre bases complementarias: timina con adenina (T=A, dos enlaces) y citosina con guanina (C≡G, tres enlaces). Ninguna otra combinación es posible, por eso las cadenas son siempre complementarias.", m:"A la altura del gen, estos enlaces se separan para que el ADN se abra y pueda transcribirse."},
+  nucleo:{n:"Núcleo y membrana nuclear", c:"#7CC2B9", paso:0, f:"En las células eucariontes el material genético está albergado principalmente en el núcleo, en forma de cromatina o de cromosomas. La transcripción se lleva a cabo dentro del núcleo. La membrana nuclear lo separa del citoplasma y tiene poros.", m:"Los poros permiten que el ARN mensajero salga del núcleo."},
+  poro:{n:"Poro de la membrana nuclear", c:"#93C9B5", paso:0, f:"Abertura de la membrana nuclear. El ARN mensajero formado en el núcleo sale a través de un poro y viaja al ribosoma.", m:"El ARNm lo atraviesa de a una cadena simple, saliendo del núcleo hacia el citoplasma."},
+  nucleotido:{n:"Nucleótidos", c:"#F2D16B", paso:1, f:"Son los monómeros de los ácidos nucleicos. Cada uno tiene una pentosa (ribosa en el ARN, desoxirribosa en el ADN), un grupo fosfato y una base nitrogenada: guanina (G), adenina (A), citosina (C), timina (T) o uracilo (U). En el núcleo hay nucleótidos sueltos.", m:"Los nucleótidos sueltos se colocan de manera complementaria frente a la cadena de ADN, como piezas de rompecabezas, y van formando el ARN mensajero."},
+  arnm:{n:"ARN mensajero (ARNm)", c:"#F2D16B", paso:1, f:"Molécula intermedia que se transcribe a partir del ADN. Tiene una estructura similar a la del ADN, pero es una sola cadena y tiene uracilo (U) en lugar de timina (T). Lleva la información del gen hacia el ribosoma, escrita en codones.", m:"Se forma en el núcleo, sale por un poro de la membrana nuclear y se coloca en el ribosoma, que lo lee a medida que pasa."},
+  codon:{n:"Codón", c:"#F2D16B", paso:3, f:"Cada tripleta de nucleótidos del ARNm. El código genético se expresa en codones, y a cada codón le corresponde un aminoácido determinado. El ribosoma lee el ARNm de a tres nucleótidos.", m:"A medida que el ARNm avanza por el ribosoma, se va leyendo un codón tras otro."},
+  ribosoma:{n:"Ribosoma", c:"#8AA5A1", paso:0, f:"Estructura del citoplasma (organela) con una subunidad mayor y una subunidad menor. Es el sitio de la traducción: ahí la secuencia de nucleótidos del ARNm se convierte en una secuencia de aminoácidos y se arma la proteína.", m:"El ARNm pasa a través del ribosoma como una cinta por la cabeza de una grabadora; el ribosoma lo escanea de a tres nucleótidos."},
+  arnt:{n:"ARN de transferencia (ARNt)", c:"#C97686", paso:4, f:"Otro tipo de ARN que hace posible la traducción: lleva hasta el ribosoma el aminoácido que corresponde a cada codón.", m:"Llega al ribosoma con su aminoácido, se ubica junto al codón que corresponde, le deja el aminoácido al ribosoma y se va."},
+  aminoacido:{n:"Aminoácidos", c:"#5FA089", paso:4, f:"Son la mínima unidad de las proteínas. Hay 20 aminoácidos distintos. Se enlazan en una secuencia particular, y la secuencia y la longitud de la cadena determinan cada proteína.", m:"Cada aminoácido llega con un ARNt y el ribosoma lo enlaza al anterior, formando una cadena."},
+  proteina:{n:"Proteína", c:"#8E7CC3", paso:5, f:"Cadena de aminoácidos plegada en una forma tridimensional. Es el producto final de la expresión de la mayoría de los genes. Su plegamiento es la base de su función (estructural, transportadora, etc.).", m:"Al terminar de formarse, la cadena de aminoácidos se pliega y adquiere su forma tridimensional."}
+};
+var ORDEN_CHIPS = ["adn","gen","basepair","nucleo","poro","nucleotido","arnm","codon","ribosoma","arnt","aminoacido","proteina"];
+
+/* ---------- panel, pasos y lista ---------- */
+var s = 0, timer = null, speed = 1, actual = null, tStep = 0;
+var chips = $("chips");
+ORDEN_CHIPS.forEach(function(k){
+  var b = el("button","chip"); b.type="button"; b.setAttribute("aria-pressed","false"); b.dataset.k = k;
+  var i = el("i"); i.style.background = INFO[k].c;
+  b.appendChild(i); b.appendChild(document.createTextNode(INFO[k].n));
+  b.addEventListener("click", function(){ mostrar(k, true); });
+  chips.appendChild(b);
+});
+function mostrar(key, conDemo){
+  var d = INFO[key]; actual = key;
+  $("inf-n").textContent = d.n; $("inf-f").textContent = d.f;
+  $("inf-m").textContent = d.m; $("inf-mt").hidden = false;
+  $("inf-bases").hidden = !(key==="basepair" || key==="nucleotido" || key==="arnm");
+  $("info").style.setProperty("--ac", d.c);
+  var av=$("inf-aviso"), ir=$("inf-ir");
+  if(d.paso > s){ av.hidden=false; av.textContent="Todavía no apareció en la escena: se incorpora en el paso "+(d.paso+1)+"."; ir.hidden=false; ir.dataset.p=d.paso; }
+  else { av.hidden=true; ir.hidden=true; }
+  $("inf-ver").hidden = d.paso > s;
+  chips.querySelectorAll(".chip").forEach(function(c){ c.setAttribute("aria-pressed", c.dataset.k===key ? "true":"false"); });
+  if(conDemo && d.paso <= s) demo(key);
+}
+$("inf-ver").addEventListener("click", function(){ if(actual) demo(actual); });
+$("inf-ir").addEventListener("click", function(){ pausar(); ir(parseInt($("inf-ir").dataset.p,10)); if(actual) mostrar(actual,true); });
+var rango=$("rango"), bAnt=$("b-ant"), bSig=$("b-sig"), bPlay=$("b-play"), bIni=$("b-ini");
+function ir(n){
+  n = Math.max(0, Math.min(PASOS.length-1, n)); s = n; tStep = clock();
+  $("num-paso").textContent = "Paso "+(s+1)+" de "+PASOS.length;
+  $("tit-paso").textContent = PASOS[s].t; $("txt-paso").textContent = PASOS[s].d;
+  rango.value = s; bAnt.disabled = s===0; bIni.disabled = s===0; bSig.disabled = s===PASOS.length-1;
+  if(actual) mostrar(actual,false);
+}
+function pausar(){ if(timer){ clearInterval(timer); timer=null; } bPlay.textContent="▶ Reproducir"; bPlay.setAttribute("aria-pressed","false"); }
+function reproducir(){
+  if(s>=PASOS.length-1) ir(0);
+  bPlay.textContent="⏸ Pausar"; bPlay.setAttribute("aria-pressed","true");
+  clearInterval(timer);
+  timer = setInterval(function(){ if(s>=PASOS.length-1){ pausar(); return; } ir(s+1); }, 8500/speed);
+}
+bPlay.addEventListener("click", function(){ timer ? pausar() : reproducir(); });
+bAnt.addEventListener("click", function(){ pausar(); ir(s-1); });
+bSig.addEventListener("click", function(){ pausar(); ir(s+1); });
+bIni.addEventListener("click", function(){ pausar(); ir(0); });
+rango.addEventListener("input", function(){ pausar(); ir(parseInt(rango.value,10)); });
+$("vel").addEventListener("change", function(e){ speed=parseFloat(e.target.value); if(timer) reproducir(); });
+
+/* ---------- escena ---------- */
+if(typeof THREE === "undefined"){ sin3d.hidden=false; ir(0); return; }
+var renderer;
+try{ renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true}); }
+catch(e){ sin3d.hidden=false; ir(0); return; }
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+renderer.setClearColor(0xffffff, 1);
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 300);
+var CAM_Z = 40; camera.position.set(0,0,CAM_Z);
+scene.add(new THREE.AmbientLight(0xffffff,.72));
+var l1=new THREE.DirectionalLight(0xffffff,.75); l1.position.set(6,10,14); scene.add(l1);
+var l2=new THREE.DirectionalLight(0xffffff,.3); l2.position.set(-8,-5,8); scene.add(l2);
+var V3 = THREE.Vector3;
+var world = new THREE.Group(); world.rotation.set(.28,-.32,0); scene.add(world);
+var DNA = new THREE.Group(); world.add(DNA);
+
+function M(c,o){ var m=new THREE.MeshStandardMaterial({color:c, roughness:.55, metalness:.05}); if(o!==undefined){ m.transparent=true; m.opacity=o; m.depthWrite=false; } return m; }
+var COL = {A:0xE6A0AC, T:0xEFA98D, G:0x93C9B5, C:0x7CC2B9, U:0xF2D16B};
+var mDna = {A:M(COL.A), T:M(COL.T), G:M(COL.G), C:M(COL.C)};
+var mRna = {A:M(COL.A), U:M(COL.U), G:M(COL.G), C:M(COL.C)};
+var mCad = M(0x33484A), mGen = M(0x4C948B);
+var mMem = M(0x7CC2B9,.10), mMemW = new THREE.MeshBasicMaterial({color:0x7CC2B9, wireframe:true, transparent:true, opacity:.16});
+var mPoro = M(0x5FA089), mRiboG = M(0x8AA5A1,.55), mRiboP = M(0xB7C9C6,.55);
+var mTRNA = M(0xC97686), mLink = M(0x5C7472), mLinkP = M(0x8E7CC3);
+var AAC = [0xC97686, 0xD3805F, 0x5FA089, 0x4C948B, 0x8E7CC3, 0xC9A227];
+var mAA = AAC.map(function(c){ return M(c); });
+
+var reg = {}, pick = [];
+function tag(m, keys){ keys = [].concat(keys); m.userData.key = keys[0]; keys.forEach(function(k){ (reg[k]=reg[k]||[]).push(m); }); pick.push(m); return m; }
+
+/* geometría */
+var R=1, K=2*Math.PI/7, DX=.2, X0=-14.5, NB=66, GI0=33, GI1=50, DNAY=3.5, SP=.3;
+var RNA="AUGGCUUACGGACAAUUC";
+var rnaToDna={U:"A",A:"T",G:"C",C:"G"}, compD={A:"T",T:"A",G:"C",C:"G"};
+var seed=11; function rnd(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }
+var baseA=[], baseB=[], i, j, k;
+for(i=0;i<NB;i++){ if(i>=GI0 && i<=GI1){ baseA[i]=rnaToDna[RNA.charAt(GI1-i)]; } else { baseA[i]="ATGC".charAt(Math.floor(rnd()*4)); } baseB[i]=compD[baseA[i]]; }
+function win(i){ var a=GI0-4, b=GI1+4; if(i<a||i>b) return 0; if(i<GI0) return (i-a)/4; if(i>GI1) return (b-i)/4; return 1; }
+var gBead=new THREE.SphereGeometry(.2,12,10), gRod=new THREE.CylinderGeometry(.08,.08,1,8), gLink=new THREE.CylinderGeometry(.11,.11,1,8);
+
+DNA.position.set(0,DNAY,0);
+var beadA=[], beadB=[], rods=[];
+for(i=0;i<NB;i++){
+  var enGen = i>=GI0 && i<=GI1, mt = enGen ? mGen : mCad, kk = enGen ? "gen" : "adn";
+  var a1=new THREE.Mesh(gBead,mt), b1=new THREE.Mesh(gBead,mt);
+  DNA.add(a1,b1); tag(a1,kk); tag(b1,kk); beadA.push(a1); beadB.push(b1);
+  if(i%2===0){
+    var xr=X0+i*DX, ar=K*xr;
+    [[1,mDna[baseA[i]]],[-1,mDna[baseB[i]]]].forEach(function(h){
+      var m=new THREE.Mesh(gRod,h[1]); m.position.set(xr,h[0]*.5*R*Math.cos(ar),h[0]*.5*R*Math.sin(ar)); m.rotation.x=ar; m.userData.len=R*.92; m.userData.i=i; m.scale.set(1,m.userData.len,1);
+      DNA.add(m); tag(m,"basepair"); rods.push(m);
+    });
+  }
+}
+function posDNA(ob){
+  for(var q=0;q<NB;q++){
+    var x=X0+q*DX, w=win(q), r=R*(1+.95*ob*w), a=K*x;
+    beadA[q].position.set(x, r*Math.cos(a), r*Math.sin(a));
+    beadB[q].position.set(x, r*Math.cos(a+Math.PI), r*Math.sin(a+Math.PI));
+  }
+  rods.forEach(function(m){ var sc=Math.max(1-ob*win(m.userData.i),.0001); m.visible=sc>0.03; m.scale.set(Math.max(sc,.0001),m.userData.len*Math.max(sc,.0001),Math.max(sc,.0001)); });
+}
+
+/* zonas de toque invisibles (para piezas finas) */
+var mHit=new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false});
+function hitDNA(len,cx,rad,key){ var m=new THREE.Mesh(new THREE.CylinderGeometry(rad,rad,len,12),mHit); m.rotation.z=Math.PI/2; m.position.set(cx,0,0); m.userData.proxy=true; DNA.add(m); tag(m,key); return m; }
+hitDNA(3.9,X0+((GI0+GI1)/2)*DX,2.0,"gen");
+hitDNA(6.4,-11.3,1.5,"adn");
+hitDNA(2.8,-2.9,1.5,"adn");
+var hitARN=new THREE.Mesh(new THREE.CylinderGeometry(.65,.65,1,10),mHit); hitARN.userData.proxy=true; world.add(hitARN); tag(hitARN,"arnm");
+
+/* núcleo */
+var NC=new V3(-8,0,0), NR=8;
+var memb=new THREE.Mesh(new THREE.SphereGeometry(NR,36,24), mMem); memb.position.copy(NC); world.add(memb);
+var membW=new THREE.Mesh(new THREE.SphereGeometry(NR*1.003,22,14), mMemW); membW.position.copy(NC); world.add(membW);
+function poro(dir){ var d=dir.clone().normalize(), p=NC.clone().add(d.clone().multiplyScalar(NR)); var m=new THREE.Mesh(new THREE.TorusGeometry(.95,.22,10,24), mPoro); m.position.copy(p); m.lookAt(p.clone().add(d)); world.add(m); tag(m,"poro"); return m; }
+var poros=[ poro(new V3(1,0,0)), poro(new V3(.75,.62,.2)), poro(new V3(.7,-.55,.45)), poro(new V3(.6,.1,-.8)) ];
+
+/* nucleótidos / ARNm */
+var arn=[];
+var gNuc=new THREE.SphereGeometry(.27,14,10);
+var floatBase=[], phase=[];
+for(j=0;j<18;j++){
+  var mt2 = mRna[RNA.charAt(j)];
+  var m=new THREE.Mesh(gNuc,mt2); world.add(m); tag(m,["nucleotido","arnm"]); m.userData.key="nucleotido"; arn.push(m);
+  floatBase.push(new V3(-10.2+rnd()*4.8, 5.4+rnd()*1.4, (rnd()-.5)*5)); phase.push(rnd()*6.28);
+}
+
+/* ribosoma */
+var RX=10;
+var riboG=new THREE.Mesh(new THREE.SphereGeometry(1,24,16), mRiboG); riboG.scale.set(3.1,2.0,2.4); world.add(riboG); tag(riboG,"ribosoma");
+var riboP=new THREE.Mesh(new THREE.SphereGeometry(1,24,16), mRiboP); riboP.scale.set(2.4,1.55,1.9); world.add(riboP); tag(riboP,"ribosoma");
+
+/* ARNt y aminoácidos */
+var trnas=[], aas=[], links=[];
+var gCil=new THREE.CylinderGeometry(.13,.13,1,8), gLoop=new THREE.SphereGeometry(.2,10,8), gAA=new THREE.SphereGeometry(.46,16,12);
+for(k=0;k<6;k++){
+  var g=new THREE.Group();
+  var tallo=new THREE.Mesh(gCil,mTRNA); tallo.scale.set(1,1.5,1); tallo.position.set(0,-.75,0); g.add(tallo); tag(tallo,"arnt");
+  for(var q=-1;q<=1;q++){ var lp=new THREE.Mesh(gLoop,mTRNA); lp.position.set(q*.32,0,0); g.add(lp); tag(lp,"arnt"); }
+  var br=new THREE.Mesh(gCil,mTRNA); br.scale.set(1,.9,1); br.rotation.z=Math.PI/2; br.position.set(.45,-1.5,0); g.add(br); tag(br,"arnt");
+  world.add(g); trnas.push(g);
+  var aa=new THREE.Mesh(gAA,mAA[k]); world.add(aa); tag(aa,["aminoacido","proteina"]); aa.userData.key="aminoacido"; aas.push(aa);
+}
+for(k=0;k<5;k++){ var lk=new THREE.Mesh(gLink,mLinkP); world.add(lk); tag(lk,"proteina"); links.push(lk); }
+
+/* ---------- estado animado ---------- */
+var st={ob:0,tx:0,nuc:0,mp:0,fold:0};
+var demos={}, DEMO_T=3.4;
+function demo(key){ demos[key]=clock(); }
+var matsKey={}; Object.keys(reg).forEach(function(kk){ var set=[],seen={}; reg[kk].forEach(function(mm){ if(!seen[mm.material.uuid]){ seen[mm.material.uuid]=1; set.push(mm.material); } }); matsKey[kk]=set; });
+function ap(cur,tar,rate,dt){ var d=tar-cur, m=rate*dt; return Math.abs(d)<=m ? tar : cur+(d>0?m:-m); }
+function cl(v,a,b){ a=a===undefined?0:a; b=b===undefined?1:b; return v<a?a:(v>b?b:v); }
+function sm(t){ t=cl(t); return t*t*(3-2*t); }
+function lerp3(a,b,t){ return new V3(a.x+(b.x-a.x)*t, a.y+(b.y-a.y)*t, a.z+(b.z-a.z)*t); }
+function setS(m,v){ m.visible=v>0.03; m.scale.setScalar(Math.max(v,.0001)); }
+var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var auto=false, arrastrando=false, last=clock();
+var XC1=3.0, XC2=7.9, XC3=12.1;
+function centro(mp){
+  if(mp<=1){ var P0=new V3(-6.2,6.5,0), P1=new V3(-3,0,0), P2=new V3(XC1,0,0); return mp<=.35 ? lerp3(P0,P1,sm(mp/.35)) : lerp3(P1,P2,(mp-.35)/.65); }
+  if(mp<=2) return new V3(XC1+(mp-1)*(XC2-XC1),0,0);
+  return new V3(XC2+(mp-2)*(XC3-XC2),0,0);
+}
+var tmpV=new V3();
+function slotAA(k){ return new V3(9.8+k*.95, 4.7, 0); }
+function foldAA(k){ var th=k*1.15; return new V3(13.4+1.5*Math.cos(th), 5.0+1.5*Math.sin(th), 1.3*Math.cos(k*.9)); }
+var dirY=new V3(0,1,0);
+function enlace(m,a,b,vis){ if(!vis){ m.visible=false; return; } m.visible=true; var d=new V3().subVectors(b,a), L=d.length(); m.position.copy(a).add(b).multiplyScalar(.5); m.scale.set(1,Math.max(L,.0001),1); m.quaternion.setFromUnitVectors(dirY,d.normalize()); }
+
+function actualizar(dt, now){
+  var v=speed;
+  st.ob = ap(st.ob, s===1?1:0, .55*v, dt);
+  st.tx = ap(st.tx, s>=1?18:0, 3.6*v, dt);
+  st.nuc = ap(st.nuc, s>=1?1:0, 2*v, dt);
+  var tmp = s<=1?0 : (s===2?1 : (s===3?2:3));
+  st.mp = ap(st.mp, tmp, (st.mp<2?.3:.13)*v, dt);
+  st.fold = ap(st.fold, s>=5?1:0, .4*v, dt);
+  var tr = cl((st.mp-2)*6, 0, 6);
+
+  /* demos */
+  var fx={dna:0,sep:0,poro:1,aa:1,codon:-1,trnaY:0,memO:0,nuc:1,prot:1};
+  Object.keys(INFO).forEach(function(key){
+    var t0=demos[key]; if(t0===undefined) return;
+    var p=(now-t0)/DEMO_T, mats=matsKey[key]||[];
+    if(p>=1){ delete demos[key]; mats.forEach(function(m){ if(m.emissive) m.emissive.setRGB(0,0,0); }); mMem.opacity=.10; return; }
+    var g=.5*Math.abs(Math.sin(p*Math.PI*3));
+    mats.forEach(function(m){ if(m.emissive) m.emissive.setRGB(g,g,g); });
+    if(key==="adn") fx.dna=.9*Math.sin(p*Math.PI*2);
+    if(key==="ribosoma") fx.sep=.9*Math.sin(p*Math.PI);
+    if(key==="poro") fx.poro=1+.45*Math.abs(Math.sin(p*Math.PI*3));
+    if(key==="aminoacido") fx.aa=1+.4*Math.abs(Math.sin(p*Math.PI*3));
+    if(key==="codon") fx.codon=Math.min(5,Math.floor(p*6));
+    if(key==="arnt") fx.trnaY=.5*Math.sin(p*Math.PI*4);
+    if(key==="nucleo"){ mMem.opacity=.10+.28*Math.abs(Math.sin(p*Math.PI*3)); }
+    if(key==="nucleotido") fx.nuc=1+.35*Math.abs(Math.sin(p*Math.PI*4));
+    if(key==="proteina") fx.prot=1+.25*Math.abs(Math.sin(p*Math.PI*3));
+  });
+
+  DNA.rotation.x = fx.dna;
+  posDNA(st.ob);
+  poros.forEach(function(m){ m.scale.setScalar(fx.poro); });
+  riboG.position.set(RX, 1.55+fx.sep, 0); riboP.position.set(RX, -1.55-fx.sep, 0);
+
+  /* ARNm */
+  var c=centro(st.mp), u=Math.min(st.mp,1), sDet = st.mp>=1 ? 1 : sm(u/.35);
+  var tt=now;
+  arn.forEach(function(m,j){
+    var fl=floatBase[j], ph=phase[j];
+    var fpos=new V3(fl.x+Math.sin(tt*.9+ph)*.35, fl.y+Math.cos(tt*1.1+ph)*.3, fl.z+Math.sin(tt*.7+ph)*.35);
+    var slot=new V3(-4.5-j*.2, DNAY+3.0, 0);
+    var placed=sm(cl(st.tx-j));
+    var pre=lerp3(fpos,slot,placed);
+    var line=new V3(c.x-(j-8.5)*SP, c.y, 0);
+    var pos=lerp3(pre,line,sDet);
+    m.position.copy(pos);
+    var sc=st.nuc*fx.nuc;
+    if(st.mp>2 && fx.codon<0){ var f=tr-Math.floor(j/3); if(f>=0 && f<1) sc*=1.35; }
+    if(fx.codon>=0 && Math.floor(j/3)===fx.codon) sc*=1.6;
+    setS(m,sc);
+    m.userData.key = st.tx>j+.99 ? "arnm" : "nucleotido";
+  });
+
+  /* ARNt y aminoácidos */
+  for(var k2=0;k2<6;k2++){
+    var f2=tr-k2, g2=trnas[k2], aa=aas[k2];
+    var cx=c.x-((3*k2+1)-8.5)*SP;
+    var vis = f2>-.8 && f2<1.0 && st.mp>2;
+    var y;
+    if(f2<0) y=-4.6+(1.1+3.5*0)*0;
+    var yFar=-4.9, yDock=-.75;
+    if(f2<0) y=yFar+(yDock-yFar)*sm((f2+.8)/.8);
+    else if(f2<.55) y=yDock;
+    else y=yDock+(yFar-yDock)*sm((f2-.55)/.45);
+    g2.visible=vis; g2.position.set(cx,y+fx.trnaY,0);
+    var punta=new V3(cx+.45, y-1.5+fx.trnaY, 0);
+    var slot2=slotAA(k2), basePos, show;
+    if(f2<.55){ basePos=punta; show=f2>-.8; } else if(f2<1){ basePos=lerp3(punta,slot2,sm((f2-.55)/.45)); show=true; } else { basePos=slot2; show=true; }
+    if(st.mp<=2){ show=false; }
+    var fp=lerp3(basePos, foldAA(k2), st.fold);
+    aa.position.copy(fp);
+    setS(aa, show ? 1*fx.aa*(st.fold>0?fx.prot:1) : 0);
+  }
+  var arnFormado = st.tx>=17.5 && st.nuc>.5;
+  if(arnFormado){ var h0=arn[0].position, h1=arn[17].position; hitARN.visible=true; hitARN.position.copy(h0).add(h1).multiplyScalar(.5); var dd=new V3().subVectors(h1,h0), LL=Math.max(dd.length(),.5); hitARN.scale.set(1,LL+.6,1); hitARN.quaternion.setFromUnitVectors(dirY,dd.lengthSq()>1e-6?dd.normalize():dirY); } else { hitARN.visible=false; }
+  for(var q2=0;q2<5;q2++){ enlace(links[q2], aas[q2].position, aas[q2+1].position, aas[q2].visible && aas[q2+1].visible && tr>=q2+1.55); }
+
+  if(auto && !arrastrando && !reduce){ world.rotation.y += dt*.18; }
+  proyectarEtiquetas();
+}
+var labN=$("lab-nuc"), labC=$("lab-cit");
+function proyectarEtiquetas(){
+  var r=wrap.getBoundingClientRect();
+  function pos(el2, x,y,z){ var v=new V3(x,y,z); world.localToWorld(v); v.project(camera); el2.style.left=((v.x*.5+.5)*r.width)+"px"; el2.style.top=((-v.y*.5+.5)*r.height)+"px"; }
+  pos(labN,-8,-NR-1.2,0); pos(labC,13,-6.5,0);
+}
+function bucle(){ var now=clock(), dt=Math.min(now-last,.05); last=now; actualizar(dt,now); renderer.render(scene,camera); requestAnimationFrame(bucle); }
+
+/* ---------- interacción ---------- */
+var ZMAX=100;
+function tam(){
+  var r=wrap.getBoundingClientRect(), w=Math.max(r.width,10), h=Math.max(r.height,10);
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+  var ajuste=Math.max(36, 19/(Math.tan(camera.fov*Math.PI/360)*camera.aspect));
+  if(Math.abs(camera.position.z-CAM_Z)<.01) camera.position.z=ajuste;
+  CAM_Z=ajuste;
+}
+if(window.ResizeObserver){ new ResizeObserver(tam).observe(wrap); } window.addEventListener("resize",tam); tam();
+var ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
+function visibleDeep(o){ while(o){ if(!o.visible) return false; o=o.parent; } return true; }
+function pickEn(ev){
+  var r=canvas.getBoundingClientRect();
+  mouse.set(((ev.clientX-r.left)/r.width)*2-1, -((ev.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(mouse,camera);
+  world.updateMatrixWorld(true);
+  var hits=ray.intersectObjects(pick,false), prox=null;
+  for(var h=0;h<hits.length;h++){ var o=hits[h].object; if(!visibleDeep(o)) continue; if(o.userData.proxy){ if(!prox) prox=o.userData.key; } else return o.userData.key; }
+  if(prox) return prox;
+  if(ray.intersectObject(memb,false).length) return "nucleo";
+  return null;
+}
+var down=null;
+canvas.addEventListener("pointerdown",function(e){ down={x:e.clientX,y:e.clientY,moved:false,px:e.clientX,py:e.clientY}; arrastrando=true; canvas.classList.add("arrastrando"); canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener("pointermove",function(e){
+  if(down){
+    var dx=e.clientX-down.px, dy=e.clientY-down.py; down.px=e.clientX; down.py=e.clientY;
+    if(Math.abs(e.clientX-down.x)+Math.abs(e.clientY-down.y)>5) down.moved=true;
+    if(down.moved){ world.rotation.y+=dx*.008; world.rotation.x=Math.max(-1.3,Math.min(1.3,world.rotation.x+dy*.008)); }
+    tip.hidden=true; return;
+  }
+  var kk=pickEn(e); canvas.classList.toggle("sobre",!!kk);
+  if(kk){ var r=wrap.getBoundingClientRect(); tip.hidden=false; tip.textContent=INFO[kk].n; tip.style.left=(e.clientX-r.left)+"px"; tip.style.top=(e.clientY-r.top)+"px"; } else { tip.hidden=true; }
+});
+function soltar(e){ if(!down) return; var fue=!down.moved; down=null; arrastrando=false; canvas.classList.remove("arrastrando"); if(fue){ var kk=pickEn(e); if(kk) mostrar(kk,true); } }
+canvas.addEventListener("pointerup",soltar);
+canvas.addEventListener("pointercancel",function(){ down=null; arrastrando=false; canvas.classList.remove("arrastrando"); });
+canvas.addEventListener("pointerleave",function(){ tip.hidden=true; });
+canvas.addEventListener("wheel",function(e){ e.preventDefault(); camera.position.z=Math.max(16,Math.min(ZMAX,camera.position.z+e.deltaY*.025)); },{passive:false});
+function zoom(d){ camera.position.z=Math.max(16,Math.min(ZMAX,camera.position.z+d)); }
+$("z-mas").addEventListener("click",function(){ zoom(-5); });
+$("z-menos").addEventListener("click",function(){ zoom(5); });
+$("b-vista").addEventListener("click",function(){ world.rotation.set(.28,-.32,0); camera.position.z=CAM_Z; });
+$("auto").addEventListener("change",function(e){ auto=e.target.checked; });
+
+ir(0); last=clock(); actualizar(.016,clock()); requestAnimationFrame(bucle);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Impulso nervioso · Simulador visual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tinta:#33484A; --tinta-deep:#1F3032; --gris:#5C7472;
+  --terracota:#7CC2B9; --terracota-deep:#4C948B; --terracota-soft:#E7F6F3;
+  --salvia:#93C9B5; --salvia-deep:#5FA089; --salvia-soft:#EAF6F0;
+  --ocre:#E6A0AC; --ocre-deep:#C97686; --ocre-soft:#FBEBEE;
+  --coral:#EFA98D; --coral-deep:#D3805F; --coral-soft:#FCEFE9;
+  --lila:#B9AEE6; --lila-deep:#7E70C2;
+  --arena:#F5FBFA; --arena-deep:#E7F2F1; --blanco:#FFFFFF; --radius:18px;
+  --f-display:"Fraunces",Georgia,serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--arena);color:var(--tinta);font-family:var(--f-body);line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding:26px 18px 56px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);margin:0 0 6px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,5vw,40px);line-height:1.15;margin:0 0 8px;color:var(--tinta-deep)}
+h2,h3{font-family:var(--f-display);font-weight:600;color:var(--tinta-deep);margin:0 0 8px}
+h2{font-size:clamp(20px,3vw,26px)}
+h3{font-size:19px}
+.lead{margin:0 0 18px;color:var(--gris);max-width:78ch}
+button:focus-visible,select:focus-visible{outline:3px solid var(--tinta);outline-offset:2px}
+.card{background:var(--blanco);border:2px solid var(--arena-deep);border-radius:var(--radius);padding:16px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.tab{font:inherit;font-weight:600;cursor:pointer;background:#fff;color:var(--tinta);border:2px solid var(--arena-deep);border-radius:999px;padding:7px 16px}
+.tab[aria-selected="true"]{background:var(--tinta);color:#fff;border-color:var(--tinta)}
+svg{display:block;width:100%;height:auto}
+.escena{border:2px solid var(--arena-deep);border-radius:12px;background:#fff}
+.k{cursor:pointer}
+.k:hover{filter:brightness(.93)}
+.k:focus{outline:none}.k:focus-visible{outline:2px solid var(--tinta)}
+.ion{transition:transform .9s cubic-bezier(.4,.1,.3,1),opacity .6s}
+.mov{transition:transform 1s cubic-bezier(.4,.1,.3,1),opacity .6s}
+.lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;fill:var(--gris);font-weight:600}
+.efT{font-family:var(--f-body);font-size:13px;font-weight:600;fill:var(--tinta-deep)}
+.ionT{font-family:var(--f-body);font-size:10px;font-weight:700;fill:var(--tinta-deep);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.controles{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.btn{font:inherit;font-weight:600;cursor:pointer;background:var(--tinta);color:#fff;border:0;border-radius:12px;padding:8px 14px}
+.btn:hover{background:var(--tinta-deep)}
+.btn.sec{background:#fff;color:var(--tinta);border:2px solid var(--arena-deep)}
+.btn.sec:hover{background:var(--arena)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.rango{flex:1 1 140px;min-width:120px;accent-color:var(--tinta)}
+select{font:inherit;border:2px solid var(--arena-deep);border-radius:10px;padding:5px 8px;background:#fff;color:var(--tinta)}
+.num{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);margin:0}
+.pie-paso{border-left:8px solid var(--terracota);margin-top:14px;padding:12px 14px;background:var(--arena);border-radius:0 12px 12px 0}
+.pie-paso h3{margin:2px 0 4px}
+.pie-paso p{margin:0}
+.mv{font-family:var(--f-mono);font-weight:600;font-size:28px;color:var(--tinta-deep)}
+#info{border-top:8px solid var(--ac,var(--terracota));position:sticky;top:12px}
+#info .rot{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);margin:12px 0 2px}
+#info p{margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:#fff;color:var(--tinta);border:2px solid var(--arena-deep);border-radius:999px;padding:4px 11px}
+.chip:hover,.chip[aria-pressed="true"]{background:var(--arena)}
+.chip i{width:12px;height:12px;border-radius:50%;border:2px solid var(--tinta);display:inline-block}
+.nota{font-size:14px;color:var(--gris)}
+.medidor{position:relative;height:56px;border:2px solid var(--arena-deep);border-radius:12px;background:var(--arena);overflow:hidden;margin-top:10px}
+.medidor .barra{position:absolute;left:0;top:0;bottom:0;background:var(--salvia);transition:width .25s,background .25s}
+.medidor .umbral{position:absolute;top:0;bottom:0;width:3px;background:var(--coral-deep)}
+.medidor .txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-weight:600;color:var(--tinta-deep)}
+.dispara{animation:flash .9s}
+@keyframes flash{0%{background:var(--ocre)}100%{background:var(--arena)}}
+.msg{min-height:48px;margin-top:10px;font-weight:600}
+.leyenda{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--gris);margin-top:8px}
+.leyenda span{display:inline-flex;align-items:center;gap:6px}
+.leyenda i{width:14px;height:14px;border-radius:50%;display:inline-block;border:1.5px solid var(--tinta)}
+@media (prefers-reduced-motion:reduce){.ion,.mov{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Biología del comportamiento · Clases 5 y 6 · Simulador visual</p>
+  <h1>Impulso nervioso: conducción eléctrica y química</h1>
+  <p class="lead">Recorré cómo viaja la información dentro de una neurona (eléctrica) y cómo pasa de una neurona a otra (química). <strong>Tocá cualquier ion, canal o estructura</strong> para ver qué es, qué hace y cómo se mueve.</p>
+
+  <div class="tabs" role="tablist" aria-label="Partes del simulador">
+    <button class="tab" role="tab" aria-selected="true" data-tab="t1">1 · Potencial de acción</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="t2">2 · Conducción por el axón</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="t3">3 · Sinapsis química</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="t4">4 · Integración en el cono axónico</button>
+  </div>
+
+  <div class="grid">
+    <div>
+      <!-- ============ 1. POTENCIAL DE ACCIÓN ============ -->
+      <section class="card" id="t1" role="tabpanel" aria-label="Potencial de acción">
+        <h2>Lo eléctrico: un tramo de membrana del axón</h2>
+        <div class="grid" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px">
+          <svg class="escena" id="svgM" viewBox="0 0 400 300" role="img" aria-label="Membrana del axón con iones de sodio y potasio a ambos lados y sus canales"></svg>
+          <div>
+            <p class="num">Potencial de membrana</p>
+            <div class="mv" id="mvTxt">−70 mV</div>
+            <svg id="svgG" viewBox="0 0 300 220" role="img" aria-label="Gráfico del potencial de acción: milivoltios en el tiempo"></svg>
+          </div>
+        </div>
+        <div class="controles">
+          <button class="btn sec" data-c="1" data-a="ini">⏮ Inicio</button>
+          <button class="btn sec" data-c="1" data-a="ant">◀ Anterior</button>
+          <button class="btn" data-c="1" data-a="play">▶ Reproducir</button>
+          <button class="btn sec" data-c="1" data-a="sig">Siguiente ▶</button>
+          <input class="rango" type="range" min="0" max="5" value="0" data-c="1" aria-label="Elegir paso del potencial de acción">
+        </div>
+        <div class="pie-paso"><p class="num" data-num="1"></p><h3 data-tit="1"></h3><p data-txt="1"></p></div>
+      </section>
+
+      <!-- ============ 2. CONDUCCIÓN ============ -->
+      <section class="card" id="t2" role="tabpanel" aria-label="Conducción por el axón" hidden>
+        <h2>Cómo avanza el impulso por el axón</h2>
+        <p class="nota" style="margin-top:0">El impulso nace en el cono axónico y viaja hasta el terminal axónico. Compará un axón sin mielina con uno mielinizado: mandá el mismo impulso a los dos.</p>
+        <svg class="escena" id="svgA" viewBox="0 0 600 220" role="img" aria-label="Dos axones: uno sin mielina, donde el impulso avanza de forma continua, y otro con mielina, donde salta de nodo de Ranvier en nodo de Ranvier"></svg>
+        <div class="controles">
+          <button class="btn" id="bEnviar">⚡ Enviar impulso</button>
+          <label class="nota">Velocidad <select id="velA"><option value="0.5">Lenta</option><option value="1" selected>Normal</option></select></label>
+        </div>
+        <div class="pie-paso"><p class="num">Qué mirar</p><h3>Continuo vs. saltatorio</h3><p id="txtA">En el axón sin mielina el impulso recorre toda la membrana. En el mielinizado solo se produce en los nodos de Ranvier, los tramos sin mielina: va saltando de nodo en nodo y llega antes. La mielina no conduce; aísla, como el plástico de un cable.</p></div>
+      </section>
+
+      <!-- ============ 3. SINAPSIS ============ -->
+      <section class="card" id="t3" role="tabpanel" aria-label="Sinapsis química" hidden>
+        <h2>Lo químico: de una neurona a otra</h2>
+        <div class="controles" style="margin-top:0">
+          <label class="nota"><strong>Neurotransmisor:</strong>
+            <select id="selNT"><option value="glu">Glutamato (excitador)</option><option value="gaba">GABA (inhibidor)</option></select>
+          </label>
+        </div>
+        <svg class="escena" id="svgS" viewBox="0 0 600 340" role="img" aria-label="Sinapsis: terminal axónico de la neurona presináptica con vesículas, hendidura sináptica y membrana de la neurona postsináptica con receptores" style="margin-top:10px"></svg>
+        <div class="controles">
+          <button class="btn sec" data-c="3" data-a="ini">⏮ Inicio</button>
+          <button class="btn sec" data-c="3" data-a="ant">◀ Anterior</button>
+          <button class="btn" data-c="3" data-a="play">▶ Reproducir</button>
+          <button class="btn sec" data-c="3" data-a="sig">Siguiente ▶</button>
+          <input class="rango" type="range" min="0" max="6" value="0" data-c="3" aria-label="Elegir paso de la sinapsis">
+        </div>
+        <div class="pie-paso"><p class="num" data-num="3"></p><h3 data-tit="3"></h3><p data-txt="3"></p></div>
+      </section>
+
+      <!-- ============ 4. INTEGRACIÓN ============ -->
+      <section class="card" id="t4" role="tabpanel" aria-label="Integración en el cono axónico" hidden>
+        <h2>Sumar PEP y PIP en el cono axónico</h2>
+        <p class="nota" style="margin-top:0">Cada PEP (glutamato, entra Na⁺) acerca la neurona al umbral; cada PIP (GABA, entra Cl⁻) la aleja. Un potencial solo no alcanza: son <strong>subliminales</strong>. Si se suman rápido (temporal) o varios a la vez (espacial) y la suma llega a −55 mV, se dispara el potencial de acción.</p>
+        <div class="controles">
+          <button class="btn" id="bPep">＋ 1 PEP</button>
+          <button class="btn" id="bPep3">＋ 3 PEP a la vez (espacial)</button>
+          <button class="btn sec" id="bPip">＋ 1 PIP</button>
+          <button class="btn sec" id="bRes">Reiniciar</button>
+        </div>
+        <div class="medidor" id="med" aria-live="polite">
+          <div class="barra" id="barra"></div>
+          <div class="umbral" id="umb" title="Umbral −55 mV"></div>
+          <div class="txt" id="medTxt">−70 mV · reposo</div>
+        </div>
+        <div class="leyenda"><span>Izquierda: −90 mV</span><span><i style="background:var(--coral-deep);border-radius:2px;width:4px"></i> umbral −55 mV</span><span>Derecha: −40 mV</span></div>
+        <div class="msg" id="msg" aria-live="polite">Probá: un PEP solo. Después, varios PEP seguidos y rápido. Después, PEP y PIP mezclados.</div>
+        <p class="nota">Con el tiempo, cada potencial local se va apagando y la membrana vuelve hacia −70 mV: por eso importa que los PEP lleguen juntos o muy seguidos.</p>
+      </section>
+    </div>
+
+    <aside class="card" id="info" aria-live="polite" aria-label="Información del elemento elegido">
+      <p class="num">Elegiste</p>
+      <h2 id="infN">Tocá un elemento</h2>
+      <p id="infF">Elegí un ion, un canal o una estructura en la escena (o en la lista de abajo) para ver qué es y qué hace.</p>
+      <p class="rot" id="infMt" hidden>¿Cómo se mueve?</p>
+      <p id="infM"></p>
+      <p class="rot">Componentes</p>
+      <div class="chips" id="chips"></div>
+    </aside>
+  </div>
+
+  <p class="nota">Modelo esquemático y simplificado, armado con los términos de las clases 5 y 6: Guía de TP N.° 5 «Impulso nervioso y sinapsis», ficha «Puntos clave sobre Comunicación Neural» (extractos de Miranda-García y Santín-Núñez, 2019, cap. 9 en Redolar-Ripoll, <em>Psicobiología</em>), resumen del cap. 6 «Células del sistema nervioso» y tus apuntes de clase. Los valores (−70, −55 y +50 mV) son los de tus resúmenes; la cantidad de iones y los tamaños no son reales.</p>
+</main>
+
+<script>
+(function(){
+"use strict";
+var NS="http://www.w3.org/2000/svg";
+function el(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs){e.setAttribute(k,attrs[k]);}if(parent)parent.appendChild(e);return e;}
+function tx(parent,x,y,t,cls){var e=el("text",{x:x,y:y,"class":cls||"lbl"},parent);e.textContent=t;return e;}
+function pos(g,x,y){g.style.transform="translate("+x+"px,"+y+"px)";}
+var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------------- Información ---------------- */
+var C={na:"#EFA98D",k:"#93C9B5",ca:"#E6A0AC",cl:"#B9AEE6",nt:"#7CC2B9"};
+var INFO={
+ na:{n:"Ion sodio (Na⁺)",c:C.na,f:"En reposo está más concentrado afuera de la neurona. Cuando entra, el interior se vuelve menos negativo: despolarización. También es el que entra en un PEP, por ejemplo con el glutamato.",m:"Entra por los canales de sodio cuando se abren: en el potencial de acción (pasa de −70 a cerca de +50 mV) y en los receptores excitadores."},
+ k:{n:"Ion potasio (K⁺)",c:C.k,f:"En reposo está más concentrado adentro. Cuando sale, se lleva cargas positivas y el interior vuelve a ser negativo: repolarización. Si sigue saliendo, el interior queda más negativo que en reposo: hiperpolarización.",m:"Sale por los canales de potasio después del pico del potencial de acción."},
+ ca:{n:"Ion calcio (Ca²⁺)",c:C.ca,f:"Es la señal que hace que las vesículas sinápticas se fusionen con la membrana presináptica y liberen el neurotransmisor.",m:"Entra al terminal axónico por canales de calcio dependientes de voltaje cuando llega el potencial de acción."},
+ cl:{n:"Ion cloro (Cl⁻)",c:C.cl,f:"Tiene carga negativa: si entra, el interior queda más negativo que en reposo. Así se produce un PIP (hiperpolarización), que aleja a la neurona del umbral.",m:"Entra en la neurona postsináptica cuando el GABA se une a su receptor y abre el canal de cloro."},
+ cna:{n:"Canal de sodio",c:C.na,f:"Canal iónico de la membrana. Participa en la despolarización.",m:"Se abre cuando la membrana llega al umbral (−55 mV) y deja entrar el Na⁺; después del pico se cierra."},
+ ck:{n:"Canal de potasio",c:C.k,f:"Canal iónico de la membrana. Participa en la repolarización.",m:"Se abre después del pico y deja salir el K⁺."},
+ cca:{n:"Canal de calcio",c:C.ca,f:"Canal iónico del terminal axónico. Participa en la liberación de neurotransmisores.",m:"Es dependiente de voltaje: se abre cuando llega el potencial de acción y deja entrar el Ca²⁺."},
+ memb:{n:"Membrana plasmática",c:"#E7F2F1",f:"Es selectivamente permeable y separa cargas: en reposo el interior es negativo (−70 mV) y el exterior positivo, porque hay más Na⁺ afuera y más K⁺ adentro. Esa diferencia es la «batería cargada» que permite la señal.",m:"No se mueve: cambia su permeabilidad cuando se abren o cierran sus canales."},
+ ves:{n:"Vesícula sináptica",c:C.nt,f:"Bolsita del terminal axónico que almacena el neurotransmisor.",m:"Cuando entra el Ca²⁺, se acerca y se fusiona con la membrana presináptica; vuelca su contenido a la hendidura (exocitosis)."},
+ nt:{n:"Neurotransmisor",c:C.nt,f:"Mensajero químico que libera la neurona presináptica. Glutamato: principal excitador. GABA: principal inhibidor. Entre los dos sostienen el balance excitación/inhibición.",m:"Atraviesa la hendidura por difusión y se une a su receptor específico, como una llave en su cerradura. Después la señal termina: es recapturado, degradado o difundido."},
+ rec:{n:"Receptor específico",c:"#4C948B",f:"Proteína de la membrana postsináptica que reconoce solo su neurotransmisor. Si es ionotrópico, el receptor es un canal: se abre enseguida (respuesta rápida). Si es metabotrópico, activa reacciones dentro de la célula (respuesta lenta y duradera).",m:"Cambia de forma al unirse el neurotransmisor y abre el canal iónico asociado."},
+ hend:{n:"Hendidura sináptica",c:"#F5FBFA",f:"Espacio extracelular que separa físicamente a la neurona presináptica de la postsináptica.",m:"Es el lugar por donde difunde el neurotransmisor."},
+ pre:{n:"Neurona presináptica",c:"#E7F6F3",f:"La que envía la señal: libera el neurotransmisor desde su terminal axónico (botón sináptico).",m:"Recibe el potencial de acción que viajó por su axón."},
+ post:{n:"Neurona postsináptica",c:"#EAF6F0",f:"La que recibe la señal en sus receptores específicos, generalmente en dendritas o soma.",m:"Cambia su potencial de membrana: PEP (despolariza) o PIP (hiperpolariza)."},
+ mie:{n:"Vaina de mielina",c:"#FBEBEE",f:"Envoltura lipídica que aísla segmentos del axón (internodos), como el plástico de un cable. La forman los oligodendrocitos en el SNC y las células de Schwann en el SNP.",m:"No conduce: hace que el impulso salte de nodo en nodo y viaje más rápido (conducción saltatoria)."},
+ nodo:{n:"Nodo de Ranvier",c:"#E6A0AC",f:"Pequeño tramo del axón sin mielina, entre dos internodos.",m:"Es el único lugar donde el impulso se produce en un axón mielinizado: va saltando de nodo en nodo."},
+ cono:{n:"Cono axónico",c:"#C97686",f:"Zona donde el axón sale del soma. Tiene el umbral de excitación más bajo de la neurona: ahí se suman todos los PEP y PIP.",m:"Si la suma supera −55 mV, se genera el potencial de acción, que sigue la ley del todo o nada."}
+};
+var infN=document.getElementById("infN"),infF=document.getElementById("infF"),infM=document.getElementById("infM"),infMt=document.getElementById("infMt"),info=document.getElementById("info");
+function mostrar(k){var d=INFO[k];if(!d)return;infN.textContent=d.n;infF.textContent=d.f;infM.textContent=d.m;infMt.hidden=false;info.style.setProperty("--ac",d.c);
+ Array.prototype.forEach.call(document.querySelectorAll(".chip"),function(c){c.setAttribute("aria-pressed",c.dataset.k===k?"true":"false");});}
+var chips=document.getElementById("chips");
+Object.keys(INFO).forEach(function(k){var b=document.createElement("button");b.type="button";b.className="chip";b.dataset.k=k;b.setAttribute("aria-pressed","false");b.innerHTML='<i style="background:'+INFO[k].c+'"></i>'+INFO[k].n;b.addEventListener("click",function(){mostrar(k);});chips.appendChild(b);});
+function tocable(g,k){g.classList.add("k");g.setAttribute("data-k",k);g.setAttribute("tabindex","0");g.setAttribute("role","button");g.setAttribute("aria-label",INFO[k].n);
+ g.addEventListener("click",function(e){e.stopPropagation();mostrar(g.getAttribute("data-k"));});
+ g.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();mostrar(g.getAttribute("data-k"));}});}
+function ion(parent,k,lab){var g=el("g",{"class":"ion"},parent);el("circle",{r:11,fill:C[k],stroke:"#1F3032","stroke-width":1.2},g);var t=tx(g,0,0,lab,"ionT");tocable(g,k);return g;}
+
+/* ---------------- Pestañas ---------------- */
+var tabs=document.querySelectorAll(".tab");
+Array.prototype.forEach.call(tabs,function(t){t.addEventListener("click",function(){
+ Array.prototype.forEach.call(tabs,function(o){o.setAttribute("aria-selected",o===t?"true":"false");document.getElementById(o.dataset.tab).hidden=(o!==t);});
+ pararTodo();});});
+
+/* ================= 1. POTENCIAL DE ACCIÓN ================= */
+var sM=document.getElementById("svgM");
+el("rect",{x:0,y:0,width:400,height:128,fill:"#FCEFE9",opacity:.45},sM);
+el("rect",{x:0,y:172,width:400,height:128,fill:"#EAF6F0",opacity:.6},sM);
+tx(sM,10,18,"Afuera · líquido extracelular");tx(sM,10,292,"Adentro · axón");
+var signoA=tx(sM,345,18,"+ + +","lbl"),signoI=tx(sM,345,292,"− − −","lbl");
+var memb=el("g",{},sM);el("rect",{x:0,y:128,width:400,height:44,fill:"#E7F2F1",stroke:"#5C7472","stroke-width":1},memb);
+for(var i=0;i<20;i++){el("circle",{cx:10+i*20,cy:134,r:5,fill:"#fff",stroke:"#93C9B5"},memb);el("circle",{cx:10+i*20,cy:166,r:5,fill:"#fff",stroke:"#93C9B5"},memb);}
+tocable(memb,"memb");
+function canal(x,k,col){var g=el("g",{},sM);var a=el("rect",{x:x-22,y:124,width:18,height:52,rx:5,fill:col,stroke:"#1F3032","stroke-width":1.2,"class":"mov"},g);var b=el("rect",{x:x+4,y:124,width:18,height:52,rx:5,fill:col,stroke:"#1F3032","stroke-width":1.2,"class":"mov"},g);tocable(g,k);return {a:a,b:b};}
+var chNa=canal(130,"cna",C.na),chK=canal(290,"ck",C.k);
+tx(sM,98,118,"canal Na⁺");tx(sM,262,190,"canal K⁺");
+var NA_OUT=[[40,50],[80,85],[120,45],[165,80],[210,55],[60,105],[190,105]],NA_IN=[[100,210],[130,245],[160,205],[95,262],[150,270],[175,235],[118,225]];
+var K_IN=[[240,215],[280,250],[320,205],[360,240],[255,268],[335,272],[300,228]],K_OUT=[[250,60],[290,95],[330,52],[370,90],[275,40],[345,105],[310,75]];
+var naI=NA_OUT.map(function(p){var g=ion(sM,"na","Na⁺");pos(g,p[0],p[1]);return g;});
+var kI=K_IN.map(function(p){var g=ion(sM,"k","K⁺");pos(g,p[0],p[1]);return g;});
+
+var sG=document.getElementById("svgG");
+function yv(mv){return 200-(mv+90)*(180/150);}
+[[-55,"umbral −55"],[-70,"reposo −70"],[0,"0 mV"]].forEach(function(r){el("line",{x1:30,x2:295,y1:yv(r[0]),y2:yv(r[0]),stroke:r[0]===-55?"#D3805F":"#B4C7C5","stroke-dasharray":"4 4","stroke-width":1.2},sG);tx(sG,32,yv(r[0])-4,r[1]);});
+var curva="M30 "+yv(-70)+" L70 "+yv(-70)+" C80 "+yv(-70)+" 85 "+yv(-56)+" 95 "+yv(-55)+" C105 "+yv(-50)+" 110 "+yv(30)+" 118 "+yv(50)+" C126 "+yv(30)+" 138 "+yv(-60)+" 150 "+yv(-70)+" C160 "+yv(-82)+" 168 "+yv(-86)+" 180 "+yv(-84)+" C200 "+yv(-80)+" 215 "+yv(-71)+" 235 "+yv(-70)+" L295 "+yv(-70);
+el("path",{d:curva,fill:"none",stroke:"#D9E6E4","stroke-width":3},sG);
+var clip=el("clipPath",{id:"clipG"},el("defs",{},sG));var clipR=el("rect",{x:0,y:0,width:60,height:220,style:"transition:width 1s"},clip);
+el("path",{d:curva,fill:"none",stroke:"#33484A","stroke-width":3,"clip-path":"url(#clipG)"},sG);
+var dot=el("circle",{r:6,fill:"#C97686",stroke:"#fff","stroke-width":2,"class":"mov"},sG);
+tx(sG,30,216,"tiempo →");
+
+var P1=[
+ {t:"Reposo: membrana polarizada",x:"La neurona está inactiva y los canales están cerrados. Hay más Na⁺ afuera y más K⁺ adentro: el interior es negativo respecto del exterior, unos −70 mV.",mv:-70,gx:60,na:0,k:0,cna:0,ck:0},
+ {t:"Llegan señales: se alcanza el umbral",x:"Los PEP que llegan acercan la membrana al umbral de excitación, unos −55 mV. Si lo superan, se dispara el potencial de acción; si no, no pasa nada (ley del todo o nada).",mv:-55,gx:95,na:1,k:0,cna:0,ck:0},
+ {t:"Despolarización: entra el Na⁺",x:"Se abren los canales de sodio y el Na⁺ entra masivamente. El interior se vuelve positivo, hasta cerca de +50 mV: la membrana invirtió su polaridad.",mv:50,gx:118,na:7,k:0,cna:1,ck:0},
+ {t:"Repolarización: sale el K⁺",x:"Los canales de sodio se cierran y se abren los de potasio. El K⁺ sale llevándose cargas positivas, y el potencial baja de nuevo hacia −70 mV.",mv:-70,gx:150,na:7,k:5,cna:0,ck:1},
+ {t:"Hiperpolarización: se pasa de largo",x:"El K⁺ sigue saliendo un poco más y el interior queda más negativo que en reposo, por debajo de −70 mV. Es el período refractario: la neurona no puede volver a disparar todavía.",mv:-85,gx:172,na:7,k:7,cna:0,ck:1},
+ {t:"Recuperación: vuelve al reposo",x:"Los canales se cierran y la membrana recupera su valor de reposo, −70 mV, lista para un nuevo impulso. (Repolarizar = volver al reposo; hiperpolarizar = pasarse por debajo.)",mv:-70,gx:235,na:0,k:0,cna:0,ck:0}
+];
+function pintar1(i){var p=P1[i];
+ naI.forEach(function(g,j){var q=j<p.na?NA_IN[j]:NA_OUT[j];pos(g,q[0],q[1]);});
+ kI.forEach(function(g,j){var q=j<p.k?K_OUT[j]:K_IN[j];pos(g,q[0],q[1]);});
+ var oa=p.cna?-12:0,ok=p.ck?-12:0;
+ chNa.a.style.transform="translateX("+oa+"px)";chNa.b.style.transform="translateX("+(-oa)+"px)";
+ chK.a.style.transform="translateX("+ok+"px)";chK.b.style.transform="translateX("+(-ok)+"px)";
+ document.getElementById("mvTxt").textContent=(p.mv>0?"+":p.mv<0?"−":"")+Math.abs(p.mv)+" mV";
+ var pos1=p.mv>0;signoA.textContent=pos1?"− − −":"+ + +";signoI.textContent=pos1?"+ + +":"− − −";
+ clipR.setAttribute("width",p.gx);
+ dot.setAttribute("cx",p.gx);dot.setAttribute("cy",yv(p.mv));
+}
+
+/* ================= 3. SINAPSIS ================= */
+var sS=document.getElementById("svgS");
+var preG=el("g",{},sS);el("path",{d:"M120 0 L480 0 L480 100 Q480 140 440 140 L160 140 Q120 140 120 100 Z",fill:"#E7F6F3",stroke:"#4C948B","stroke-width":2},preG);tocable(preG,"pre");
+tx(sS,135,22,"Terminal axónico · neurona presináptica");
+var hendG=el("g",{},sS);el("rect",{x:0,y:142,width:600,height:50,fill:"#fff",opacity:0},hendG);tocable(hendG,"hend");
+tx(sS,14,172,"hendidura");
+var postG=el("g",{},sS);el("rect",{x:40,y:206,width:520,height:134,fill:"#EAF6F0",stroke:"#5FA089","stroke-width":2,rx:14},postG);tocable(postG,"post");
+tx(sS,56,330,"Neurona postsináptica · dendrita");
+var caChs=[175,425].map(function(x){var g=el("g",{},sS);el("rect",{x:x-14,y:126,width:10,height:28,rx:3,fill:C.ca,stroke:"#1F3032","class":"mov"},g);el("rect",{x:x+4,y:126,width:10,height:28,rx:3,fill:C.ca,stroke:"#1F3032","class":"mov"},g);tocable(g,"cca");return g;});
+tx(sS,440,122,"canal Ca²⁺");
+var CA_OUT=[[150,170],[200,172],[400,170],[455,172]],CA_IN=[[160,110],[195,98],[410,108],[445,96]];
+var caI=CA_OUT.map(function(p){var g=ion(sS,"ca","Ca²⁺");pos(g,p[0],p[1]);g.style.opacity=0;return g;});
+var VES=[[220,60],[300,45],[380,62],[340,95]],VES_M=[[230,118],[300,118],[370,118],[335,118]];
+var vesI=VES.map(function(p){var g=el("g",{"class":"mov"},sS);el("circle",{r:20,fill:"#fff",stroke:"#4C948B","stroke-width":2},g);[[-7,-5],[6,-6],[0,6],[-6,7],[8,5]].forEach(function(q){el("circle",{cx:q[0],cy:q[1],r:3.2,fill:C.nt},g);});tocable(g,"ves");pos(g,p[0],p[1]);return g;});
+var REC_X=[220,300,380];
+var recG=REC_X.map(function(x){var g=el("g",{},sS);el("path",{d:"M"+(x-18)+" 206 L"+(x-18)+" 190 Q"+(x-18)+" 182 "+(x-10)+" 182 L"+(x-6)+" 182 L"+(x-6)+" 194 L"+(x+6)+" 194 L"+(x+6)+" 182 L"+(x+10)+" 182 Q"+(x+18)+" 182 "+(x+18)+" 190 L"+(x+18)+" 206 Z",fill:"#4C948B",stroke:"#1F3032","stroke-width":1.2},g);var c=el("rect",{x:x-4,y:206,width:8,height:22,fill:"#1F3032","class":"mov"},g);tocable(g,"rec");return {g:g,c:c};});
+tx(sS,410,200,"receptores");
+var NT_N=12,NT_V=[],NT_C=[],NT_R=[],NT_B=[];
+for(i=0;i<NT_N;i++){var v=VES_M[i%4];NT_V.push([v[0]+((i*7)%11)-5,v[1]+((i*5)%9)-4]);NT_C.push([190+(i*19)%220,152+(i*13)%30]);var r=REC_X[i%3];NT_R.push(i<6?[r+(i<3?-6:6),188]:[180+(i*23)%240,160+(i*11)%20]);NT_B.push(i%3===0?[260+(i*9)%80,120]:[100+(i*41)%400,165+(i*7)%20]);}
+var ntI=NT_V.map(function(p){var g=el("g",{"class":"mov"},sS);el("circle",{r:6,fill:C.nt,stroke:"#1F3032","stroke-width":1},g);tocable(g,"nt");pos(g,p[0],p[1]);g.style.opacity=0;return g;});
+var ION_C=[[200,170],[225,160],[295,172],[310,158],[375,170],[392,160]],ION_P=[[205,250],[232,282],[292,262],[315,295],[372,252],[398,286]];
+var postI=ION_C.map(function(p){var g=el("g",{"class":"ion"},sS);el("circle",{r:11,fill:C.na,stroke:"#1F3032","stroke-width":1.2},g);var t=tx(g,0,0,"Na⁺","ionT");g._t=t;g._c=g.firstChild;tocable(g,"na");pos(g,p[0],p[1]);g.style.opacity=0;return g;});
+var potTxt=tx(sS,445,250,"","lbl"),potTxt2=tx(sS,445,270,"","efT"),potTxt3=tx(sS,445,288,"","efT");potTxt.setAttribute("style","font-size:14px;fill:#1F3032");
+var apG=el("g",{"class":"mov"},sS);el("circle",{r:16,fill:"#E6A0AC",opacity:.85},apG);tx(apG,0,0,"PA","ionT");pos(apG,300,-20);
+var selNT=document.getElementById("selNT");
+function ntInfo(){return selNT.value==="glu"?{n:"glutamato",k:"na",lab:"Na⁺",col:C.na,ef:"PEP|entra Na⁺|→ despolariza"}:{n:"GABA",k:"cl",lab:"Cl⁻",col:C.cl,ef:"PIP|entra Cl⁻|→ hiperpolariza"};}
+var P3=[
+ {t:"Llega el potencial de acción",x:"El impulso que recorrió el axón llega al terminal axónico (botón sináptico) de la neurona presináptica."},
+ {t:"Se abren los canales de calcio",x:"Son canales dependientes de voltaje: se abren con la llegada del potencial de acción y el Ca²⁺ entra al terminal."},
+ {t:"Las vesículas se acercan y se fusionan",x:"El aumento de calcio hace que las vesículas sinápticas se acerquen y se fusionen con la membrana presináptica."},
+ {t:"Exocitosis: se libera el neurotransmisor",x:"Las vesículas vuelcan el neurotransmisor a la hendidura sináptica, el espacio extracelular entre las dos neuronas."},
+ {t:"Se une a su receptor específico",x:"El neurotransmisor difunde por la hendidura y se une a receptores específicos de la neurona postsináptica, como una llave en su cerradura. Sin receptor específico, no hay efecto."},
+ {t:"Se abren canales iónicos: cambia el potencial",x:""},
+ {t:"Termina la señal",x:"El neurotransmisor se separa del receptor y es recapturado, degradado o difundido. Los canales se cierran. Lo que pase después depende de la suma de todos los PEP y PIP en el cono axónico (pestaña 4)."}
+];
+function pintar3(i){var d=ntInfo();
+ pos(apG,300,i===0?60:-20);apG.style.opacity=i===0?1:0;
+ caChs.forEach(function(g){var r=g.querySelectorAll("rect"),o=(i>=1&&i<=2)?-5:0;r[0].style.transform="translateX("+o+"px)";r[1].style.transform="translateX("+(-o)+"px)";});
+ caI.forEach(function(g,j){g.style.opacity=(i>=1&&i<=3)?1:0;var q=i>=1?CA_IN[j]:CA_OUT[j];pos(g,q[0],q[1]);});
+ vesI.forEach(function(g,j){var q=i>=2?VES_M[j]:VES[j];pos(g,q[0],q[1]);g.style.opacity=i>=3?0:1;});
+ ntI.forEach(function(g,j){var q=i<=2?NT_V[j]:i===3?NT_C[j]:i<=5?NT_R[j]:NT_B[j];pos(g,q[0],q[1]);g.style.opacity=(i>=3&&i<6)?1:i===6?.35:0;});
+ recG.forEach(function(r){r.c.setAttribute("fill",i===5?"#D3805F":"#1F3032");r.c.style.transform=i===5?"scaleX(1.6)":"none";r.c.style.transformOrigin="center";r.c.style.transformBox="fill-box";});
+ postI.forEach(function(g,j){g._c.setAttribute("fill",d.col);g._t.textContent=d.lab;g.setAttribute("data-k",d.k);g.setAttribute("aria-label",INFO[d.k].n);g.style.opacity=i===5?1:0;var q=i===5?ION_P[j]:ION_C[j];pos(g,q[0],q[1]);});
+ var ef=d.ef.split("|");potTxt.textContent=i===5?ef[0]:"";potTxt2.textContent=i===5?ef[1]:"";potTxt3.textContent=i===5?ef[2]:"";
+ Array.prototype.forEach.call(sS.querySelectorAll(".ion,.mov"),function(g){g.style.pointerEvents=(g.style.opacity==="0")?"none":"";});
+ P3[5].x=selNT.value==="glu"?"El glutamato abre canales de sodio: el Na⁺ entra y el interior se vuelve menos negativo. Es un PEP (potencial excitatorio postsináptico): acerca la neurona al umbral.":"El GABA abre canales de cloro: el Cl⁻ entra y el interior queda más negativo que en reposo. Es un PIP (potencial inhibitorio postsináptico): hiperpolariza y aleja la neurona del umbral.";
+}
+selNT.addEventListener("change",function(){pintar3(st[3].i);texto(3);});
+
+/* ---------------- Controles de pasos ---------------- */
+var st={1:{i:0,max:5,f:pintar1,P:P1,timer:null},3:{i:0,max:6,f:pintar3,P:P3,timer:null}};
+function texto(c){var s=st[c],p=s.P[s.i];document.querySelector('[data-num="'+c+'"]').textContent="Paso "+(s.i+1)+" de "+(s.max+1);document.querySelector('[data-tit="'+c+'"]').textContent=p.t;document.querySelector('[data-txt="'+c+'"]').textContent=p.x;document.querySelector('input[data-c="'+c+'"]').value=s.i;}
+function ir(c,i){var s=st[c];s.i=Math.max(0,Math.min(s.max,i));s.f(s.i);texto(c);}
+function stop(c){var s=st[c];if(s.timer){clearInterval(s.timer);s.timer=null;}var b=document.querySelector('[data-c="'+c+'"][data-a="play"]');b.textContent="▶ Reproducir";}
+function pararTodo(){stop(1);stop(3);}
+Array.prototype.forEach.call(document.querySelectorAll("[data-c][data-a]"),function(b){b.addEventListener("click",function(){var c=+b.dataset.c,s=st[c],a=b.dataset.a;
+ if(a==="play"){if(s.timer){stop(c);return;}if(s.i>=s.max)ir(c,0);b.textContent="⏸ Pausa";s.timer=setInterval(function(){if(s.i>=s.max){stop(c);return;}ir(c,s.i+1);},2600);return;}
+ stop(c);if(a==="ini")ir(c,0);if(a==="ant")ir(c,s.i-1);if(a==="sig")ir(c,s.i+1);});});
+Array.prototype.forEach.call(document.querySelectorAll("input[data-c]"),function(r){r.addEventListener("input",function(){var c=+r.dataset.c;stop(c);ir(c,+r.value);});});
+
+/* ================= 2. CONDUCCIÓN ================= */
+var sA=document.getElementById("svgA");
+tx(sA,20,30,"Axón sin mielina · conducción continua");tx(sA,20,130,"Axón con mielina · conducción saltatoria");
+var X0=60,X1=560;
+function axon(y,mie){var g=el("g",{},sA);el("rect",{x:X0,y:y-6,width:X1-X0,height:12,rx:6,fill:"#E7F6F3",stroke:"#4C948B","stroke-width":1.5},g);tocable(g,"memb");
+ var cono=el("g",{},sA);el("path",{d:"M"+(X0-24)+" "+(y-16)+" L"+X0+" "+(y-6)+" L"+X0+" "+(y+6)+" L"+(X0-24)+" "+(y+16)+" Z",fill:"#C97686",opacity:.85},cono);tocable(cono,"cono");
+ var nodos=[];if(mie){for(var n=0;n<5;n++){var a=X0+8+n*100,m=el("g",{},sA);el("rect",{x:a,y:y-15,width:84,height:30,rx:14,fill:"#FBEBEE",stroke:"#C97686","stroke-width":1.5},m);tocable(m,"mie");}
+  for(n=0;n<=5;n++){var nx=X0+n*100+(n===0?0:-4);nx=Math.min(nx,X1-6);var ng=el("g",{},sA);el("rect",{x:nx-3,y:y-9,width:10,height:18,fill:"#E6A0AC",opacity:.55},ng);tocable(ng,"nodo");nodos.push(nx+2);}}
+ return nodos;}
+var nodosM=axon(170,true);axon(70,false);
+tx(sA,X1-60,198,"terminal →");
+var pul1=el("circle",{cx:X0,cy:70,r:9,fill:"#EFA98D",opacity:0},sA),pul2=el("circle",{cx:X0,cy:170,r:9,fill:"#EFA98D",opacity:0},sA);
+var flash=nodosM.map(function(x){return el("circle",{cx:x,cy:170,r:13,fill:"none",stroke:"#D3805F","stroke-width":2,opacity:0},sA);});
+var rafA=null;
+document.getElementById("bEnviar").addEventListener("click",function(){
+ if(rafA)cancelAnimationFrame(rafA);var v=+document.getElementById("velA").value,t0=null,T1=3600/v,TS=260/v;
+ pul1.setAttribute("opacity",1);pul2.setAttribute("opacity",1);flash.forEach(function(f){f.setAttribute("opacity",0);});
+ document.getElementById("txtA").textContent="Mirá: arriba el impulso avanza punto por punto; abajo se regenera solo en cada nodo de Ranvier y salta al siguiente.";
+ function paso(ts){if(!t0)t0=ts;var e=ts-t0;
+  var f1=Math.min(1,e/T1);pul1.setAttribute("cx",X0+f1*(X1-X0));
+  var k=Math.min(nodosM.length-1,Math.floor(e/TS));pul2.setAttribute("cx",nodosM[k]);flash[k].setAttribute("opacity",1);
+  if(e>=T1+400||reduce){pul1.setAttribute("cx",X1);pul2.setAttribute("cx",nodosM[nodosM.length-1]);
+   document.getElementById("txtA").textContent="Llegaron los dos, pero el mielinizado llegó mucho antes. La mielina aísla los internodos; el impulso solo se produce en los nodos de Ranvier y salta de uno a otro: es la conducción saltatoria. Por eso, si se pierde mielina, se pierde velocidad.";rafA=null;return;}
+  rafA=requestAnimationFrame(paso);}
+ rafA=requestAnimationFrame(paso);});
+
+/* ================= 4. INTEGRACIÓN ================= */
+var MIN=-90,MAX=-40,vm=-70,disparando=false;
+var barra=document.getElementById("barra"),medTxt=document.getElementById("medTxt"),msg=document.getElementById("msg"),med=document.getElementById("med");
+document.getElementById("umb").style.left=((-55-MIN)/(MAX-MIN)*100)+"%";
+function pinta4(){var w=(vm-MIN)/(MAX-MIN)*100;barra.style.width=Math.max(0,Math.min(100,w))+"%";barra.style.background=vm>-70?"#EFA98D":vm<-70?"#B9AEE6":"#93C9B5";
+ medTxt.textContent=(Math.round(vm)<0?"−":"")+Math.abs(Math.round(vm))+" mV"+(Math.abs(vm+70)<.6?" · reposo":vm>-70?" · despolarizada (PEP)":" · hiperpolarizada (PIP)");}
+function sumar(d,txt){if(disparando)return;vm+=d;
+ if(vm>=-55){disparando=true;vm=-55;pinta4();med.classList.remove("dispara");void med.offsetWidth;med.classList.add("dispara");
+  msg.textContent="¡Se superó el umbral! Se dispara el potencial de acción en el cono axónico, completo: ley del todo o nada.";
+  setTimeout(function(){vm=-70;disparando=false;pinta4();},1400);return;}
+ msg.textContent=txt;pinta4();}
+document.getElementById("bPep").addEventListener("click",function(){sumar(6,"Un PEP: entró Na⁺ y el interior subió un poco. Solo, no alcanza el umbral. Probá varios seguidos, rápido (sumación temporal).");});
+document.getElementById("bPep3").addEventListener("click",function(){sumar(18,"Tres PEP llegaron a la vez desde distintos puntos: se suman (sumación espacial).");});
+document.getElementById("bPip").addEventListener("click",function(){sumar(-6,"Un PIP: entró Cl⁻ y el interior quedó más negativo. Se resta de los PEP y aleja del umbral.");});
+document.getElementById("bRes").addEventListener("click",function(){vm=-70;disparando=false;msg.textContent="Reiniciado: la membrana está en reposo.";pinta4();});
+setInterval(function(){if(disparando)return;if(Math.abs(vm+70)>.2){vm+=(-70-vm)*.12;pinta4();}},250);
+
+/* ---------------- Inicio ---------------- */
+ir(1,0);ir(3,0);pinta4();
+setTimeout(function(){pintar3(st[3].i);},0);
+})();
+</script>
+</body>
+</html>

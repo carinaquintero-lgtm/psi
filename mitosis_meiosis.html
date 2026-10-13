@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mitosis y meiosis · Simulador visual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tinta:#33484A; --tinta-deep:#1F3032; --gris:#5C7472;
+  --terracota:#7CC2B9; --terracota-deep:#4C948B;
+  --salvia:#93C9B5; --salvia-deep:#5FA089; --salvia-soft:#EAF6F0;
+  --ocre:#E6A0AC; --ocre-deep:#C97686; --ocre-soft:#FBEBEE;
+  --coral:#EFA98D; --coral-deep:#D3805F; --coral-soft:#FCEFE9;
+  --lila:#B9AEE6; --lila-deep:#7E70C2;
+  --arena:#F5FBFA; --arena-deep:#E7F2F1; --blanco:#FFFFFF; --radius:18px;
+  --f-display:"Fraunces",Georgia,serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--arena);color:var(--tinta);font-family:var(--f-body);line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding:26px 18px 56px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);margin:0 0 6px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,5vw,40px);line-height:1.15;margin:0 0 8px;color:var(--tinta-deep)}
+h2,h3{font-family:var(--f-display);font-weight:600;color:var(--tinta-deep);margin:0 0 8px}
+h2{font-size:clamp(20px,3vw,26px)}
+h3{font-size:19px}
+.lead{margin:0 0 18px;color:var(--gris);max-width:78ch}
+button:focus-visible{outline:3px solid var(--tinta);outline-offset:2px}
+.card{background:var(--blanco);border:2px solid var(--arena-deep);border-radius:var(--radius);padding:16px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.tab{font:inherit;font-weight:600;cursor:pointer;background:#fff;color:var(--tinta);border:2px solid var(--arena-deep);border-radius:999px;padding:7px 16px}
+.tab[aria-selected="true"]{background:var(--tinta);color:#fff;border-color:var(--tinta)}
+svg{display:block;width:100%;height:auto}
+.escena{border:2px solid var(--arena-deep);border-radius:12px;background:#fff}
+.escena g.paso{animation:entra .7s ease}
+@keyframes entra{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.escena g.paso{animation:none}}
+.k{cursor:pointer}
+.k:hover{filter:brightness(.93)}
+.k:focus{outline:none}.k:focus-visible{outline:2px solid var(--tinta)}
+.lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;fill:var(--gris);font-weight:600}
+.cel{font-family:var(--f-body);font-size:13px;font-weight:700;fill:var(--tinta-deep);text-anchor:middle}
+.controles{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.btn{font:inherit;font-weight:600;cursor:pointer;background:var(--tinta);color:#fff;border:0;border-radius:12px;padding:8px 14px}
+.btn:hover{background:var(--tinta-deep)}
+.btn.sec{background:#fff;color:var(--tinta);border:2px solid var(--arena-deep)}
+.btn.sec:hover{background:var(--arena)}
+.rango{flex:1 1 140px;min-width:120px;accent-color:var(--tinta)}
+.num{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);margin:0}
+.pie-paso{border-left:8px solid var(--terracota);margin-top:14px;padding:12px 14px;background:var(--arena);border-radius:0 12px 12px 0}
+.pie-paso h3{margin:2px 0 4px}
+.pie-paso p{margin:0}
+#info{border-top:8px solid var(--ac,var(--terracota));position:sticky;top:12px}
+#info .rot{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);margin:12px 0 2px}
+#info p{margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:#fff;color:var(--tinta);border:2px solid var(--arena-deep);border-radius:999px;padding:4px 11px}
+.chip:hover,.chip[aria-pressed="true"]{background:var(--arena)}
+.chip i{width:12px;height:12px;border-radius:50%;border:2px solid var(--tinta);display:inline-block}
+.nota{font-size:14px;color:var(--gris)}
+.leyenda{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--gris);margin-top:8px}
+.leyenda span{display:inline-flex;align-items:center;gap:6px}
+.leyenda i{width:10px;height:22px;border-radius:5px;display:inline-block;border:1.5px solid var(--tinta-deep)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:8px 10px;border-bottom:2px solid var(--arena-deep);vertical-align:top}
+th{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--gris)}
+.preg{border:2px solid var(--arena-deep);border-radius:12px;padding:10px 12px;margin-top:10px}
+.preg p{margin:0 0 8px;font-weight:600}
+.preg .btn{padding:6px 12px}
+.dev{margin-top:6px;font-size:14px}
+.ok{color:var(--salvia-deep)}.mal{color:var(--coral-deep)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Biología del comportamiento · Clase 3 · Simulador visual</p>
+  <h1>Mitosis y meiosis</h1>
+  <p class="lead">Las dos formas de división celular, paso a paso. Para que se vea, cada célula muestra <strong>2 pares de cromosomas</strong> en lugar de los 23 reales. <strong>Tocá cualquier cromosoma o célula</strong> para ver qué es.</p>
+
+  <div class="tabs" role="tablist" aria-label="Partes del simulador">
+    <button class="tab" role="tab" aria-selected="true" data-tab="mit">Mitosis</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="mei">Meiosis</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="cmp">Comparar y practicar</button>
+  </div>
+
+  <div class="grid">
+    <div>
+      <section class="card" id="esc" aria-label="Escena de la división celular">
+        <svg class="escena" id="svg" viewBox="0 0 600 330" role="img" aria-label="Células con sus cromosomas durante la división"></svg>
+        <div class="leyenda">
+          <span><i style="background:#EFA98D"></i> cromosoma heredado de la madre</span>
+          <span><i style="background:#B9AEE6"></i> cromosoma heredado del padre</span>
+          <span>Largo y corto: los dos pares</span>
+        </div>
+        <div class="controles">
+          <button class="btn sec" data-a="ini">⏮ Inicio</button>
+          <button class="btn sec" data-a="ant">◀ Anterior</button>
+          <button class="btn" data-a="play">▶ Reproducir</button>
+          <button class="btn sec" data-a="sig">Siguiente ▶</button>
+          <input class="rango" id="rango" type="range" min="0" max="3" value="0" aria-label="Elegir paso">
+        </div>
+        <div class="pie-paso" aria-live="polite"><p class="num" id="numP"></p><h3 id="titP"></h3><p id="txtP"></p></div>
+      </section>
+
+      <section class="card" id="cmp" hidden aria-label="Comparar y practicar">
+        <h2>Comparar</h2>
+        <table>
+          <thead><tr><th></th><th>Mitosis</th><th>Meiosis</th></tr></thead>
+          <tbody>
+            <tr><th>Dónde</th><td>Todas las células del cuerpo (células somáticas)</td><td>Solo en las gónadas, ovarios y testículos: ovogonias y espermatogonias</td></tr>
+            <tr><th>Divisiones</th><td>Una</td><td>Dos, sucesivas</td></tr>
+            <tr><th>Cromosomas</th><td>Iguales: 46 (diploides, «clones»)</td><td>La mitad: 23 (haploides)</td></tr>
+            <tr><th>Variabilidad</th><td>No</td><td>Sí: entrecruzamiento</td></tr>
+            <tr><th>Células</th><td>Dos</td><td>Cuatro</td></tr>
+            <tr><th>Para qué</th><td>Crecer, desarrollarse, regenerar tejidos</td><td>Formar los gametos</td></tr>
+          </tbody>
+        </table>
+        <p class="nota">Cuadro de la clase 3 (1:47). La docente aclaró que no hace falta saber los nombres de las fases (1:41, 1:48).</p>
+        <h2 style="margin-top:18px">¿Mitosis o meiosis?</h2>
+        <div id="quiz"></div>
+        <p class="nota" id="puntaje" aria-live="polite"></p>
+      </section>
+    </div>
+
+    <aside class="card" id="info" aria-live="polite" aria-label="Información del elemento elegido">
+      <p class="num">Elegiste</p>
+      <h2 id="infN">Tocá un elemento</h2>
+      <p id="infF">Elegí un cromosoma o una célula en la escena (o en la lista de abajo) para ver qué es.</p>
+      <p class="rot" id="infMt" hidden>¿Qué le pasa en la división?</p>
+      <p id="infM"></p>
+      <p class="rot">Componentes</p>
+      <div class="chips" id="chips"></div>
+    </aside>
+  </div>
+
+  <p class="nota">Modelo esquemático armado con los términos de la clase 3 (sincrónico 01/04) y de Corr (2008), «Evolución y genética», <em>Psicología biológica</em>, cap. 2 (selección de cátedra), pp. 13-20. No representa las fases de la división ni el tamaño real de las células.</p>
+</main>
+
+<script>
+(function(){
+"use strict";
+var NS="http://www.w3.org/2000/svg";
+function el(tag,a,p){var e=document.createElementNS(NS,tag);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function tx(p,x,y,t,c){var e=el("text",{x:x,y:y,"class":c||"lbl"},p);e.textContent=t;return e;}
+var M="#EFA98D",P="#B9AEE6";
+
+/* ---------- Información ---------- */
+var INFO={
+ mat:{n:"Cromosoma materno",c:M,f:"Cromosoma heredado de la madre, a través del ovocito (23 cromosomas).",m:"En la mitosis se copia y cada célula hija recibe una copia. En la meiosis se alinea con su homólogo paterno e intercambia fragmentos (entrecruzamiento)."},
+ pat:{n:"Cromosoma paterno",c:P,f:"Cromosoma heredado del padre, a través del espermatozoide (23 cromosomas).",m:"Se comporta igual que el materno: se copia en la mitosis y se entrecruza con su homólogo en la meiosis."},
+ hom:{n:"Cromosomas homólogos",c:"#E7F2F1",f:"Los dos cromosomas de un mismo par: uno materno y otro paterno. Tienen los mismos genes en los mismos loci, aunque no necesariamente los mismos alelos (Corr, p. 11).",m:"En la meiosis se alinean juntos y se intercambian alelos."},
+ cop:{n:"Cromosoma duplicado",c:"#E7F2F1",f:"Antes de dividirse, la célula duplica su material genético: «saca una fotocopia» de cada cromosoma.",m:"Las dos copias quedan unidas hasta que la división las separa."},
+ dip:{n:"Célula diploide",c:"#EAF6F0",f:"Tiene los 46 cromosomas completos (23 pares: un juego materno y otro paterno). Son todas las células del cuerpo salvo los gametos.",m:"Si es somática, se divide por mitosis. Si es una ovogonia o espermatogonia, puede hacer meiosis."},
+ hap:{n:"Célula haploide (gameto)",c:"#FBEBEE",f:"Tiene la mitad de los cromosomas: 23, uno de cada par. Las únicas células haploides son los ovocitos y los espermatozoides.",m:"En la fecundación se une con otro gameto de 23 y forman una célula diploide de 46."},
+ som:{n:"Célula somática",c:"#EAF6F0",f:"Cualquier célula del cuerpo que no es gameto: piel, neuronas, glóbulos, etc.",m:"Se divide por mitosis y da dos células idénticas."},
+ gon:{n:"Ovogonia / espermatogonia",c:"#FCEFE9",f:"Células de las gónadas (ovarios y testículos), las únicas que hacen meiosis.",m:"Hacen dos divisiones sucesivas y dan cuatro gametos haploides."},
+ ent:{n:"Entrecruzamiento",c:"#E6A0AC",f:"Durante la meiosis, los pares de cromosomas se alinean e intercambian fragmentos de ADN (alelos). Así cada cromosoma heredado es único (Corr, pp. 16-18).",m:"Es la fuente principal de variabilidad genética: por eso ningún hermano es igual a otro."}
+};
+var infN=document.getElementById("infN"),infF=document.getElementById("infF"),infM=document.getElementById("infM"),infMt=document.getElementById("infMt"),info=document.getElementById("info");
+function mostrar(k){var d=INFO[k];if(!d)return;infN.textContent=d.n;infF.textContent=d.f;infM.textContent=d.m;infMt.hidden=false;info.style.setProperty("--ac",d.c);
+ Array.prototype.forEach.call(document.querySelectorAll(".chip"),function(c){c.setAttribute("aria-pressed",c.dataset.k===k?"true":"false");});}
+var chips=document.getElementById("chips");
+Object.keys(INFO).forEach(function(k){var b=document.createElement("button");b.type="button";b.className="chip";b.dataset.k=k;b.setAttribute("aria-pressed","false");b.innerHTML='<i style="background:'+INFO[k].c+'"></i>'+INFO[k].n;b.addEventListener("click",function(){mostrar(k);});chips.appendChild(b);});
+function tocable(g,k){g.classList.add("k");g.setAttribute("tabindex","0");g.setAttribute("role","button");g.setAttribute("aria-label",INFO[k].n);
+ g.addEventListener("click",function(e){e.stopPropagation();mostrar(k);});
+ g.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();mostrar(k);}});}
+
+/* ---------- Dibujo ---------- */
+var svg=document.getElementById("svg"),capa;
+// cromosoma: {l:largo, c:color, s:color del fragmento intercambiado (opcional)}
+function cromo(p,x,y,ch){var w=11,h=ch.l,g=el("g",{},p);
+ el("rect",{x:x-w/2,y:y-h/2,width:w,height:h,rx:5.5,fill:ch.c,stroke:"#1F3032","stroke-width":1.3},g);
+ if(ch.s){el("rect",{x:x-w/2+1,y:y+h/2-h*0.38,width:w-2,height:h*0.38-1,rx:4.5,fill:ch.s},g);}
+ tocable(g,ch.c===M?"mat":"pat");return g;}
+// cromosoma duplicado: dos copias unidas
+function dup(p,x,y,a,b){var g=el("g",{},p);cromo(g,x-7,y,a);cromo(g,x+7,y,b);el("circle",{cx:x,cy:y,r:3.5,fill:"#1F3032"},g);return g;}
+function celula(p,x,y,rx,ry,k,etq){var g=el("g",{},p);el("ellipse",{cx:x,cy:y,rx:rx,ry:ry,fill:k==="hap"?"#FBEBEE":k==="gon"?"#FCEFE9":"#EAF6F0",stroke:k==="hap"?"#C97686":"#5FA089","stroke-width":2},g);tocable(g,k);if(etq)tx(p,x,y+ry+20,etq,"cel");return g;}
+var L=46,S=28;
+function c(l,col,s){return {l:l,c:col,s:s};}
+var m1=c(L,M),p1=c(L,P),m2=c(S,M),p2=c(S,P);
+var m1x=c(L,M,P),p1x=c(L,P,M),m2x=c(S,M,P),p2x=c(S,P,M);
+function nucleo4(p,x,y){cromo(p,x-36,y,m1);cromo(p,x-12,y,p1);cromo(p,x+14,y,m2);cromo(p,x+38,y,p2);}
+
+var MIT=[
+ {t:"Célula somática diploide",x:"Una célula del cuerpo con sus 46 cromosomas: 23 pares, en cada par uno de la madre y otro del padre. Acá se ven 2 pares.",d:function(p){celula(p,300,150,110,95,"som","46 cromosomas · diploide");nucleo4(p,300,150);}},
+ {t:"Duplica su material genético",x:"Antes de dividirse, la célula «saca una fotocopia» de todos sus cromosomas. Cada cromosoma queda con su copia unida.",d:function(p){celula(p,300,150,110,95,"som","46 cromosomas duplicados");dup(p,250,150,m1,m1);dup(p,288,150,p1,p1);dup(p,326,150,m2,m2);dup(p,364,150,p2,p2);}},
+ {t:"Una sola división",x:"Las copias se separan hacia cada lado y la célula se divide en dos.",d:function(p){var g=el("g",{},p);el("path",{d:"M150 150 C150 60 280 60 300 105 C320 60 450 60 450 150 C450 240 320 240 300 195 C280 240 150 240 150 150 Z",fill:"#EAF6F0",stroke:"#5FA089","stroke-width":2},g);tocable(g,"som");nucleo4(p,215,150);nucleo4(p,385,150);tx(p,300,290,"se divide en dos","cel");}},
+ {t:"Dos células idénticas",x:"Resultan dos células hijas diploides, con 46 cromosomas cada una, idénticas a la célula madre: «clones». No hay variabilidad. Así crecemos, nos desarrollamos y se regeneran los tejidos.",d:function(p){celula(p,160,150,100,85,"som","46 · idéntica");nucleo4(p,160,150);celula(p,440,150,100,85,"som","46 · idéntica");nucleo4(p,440,150);}}
+];
+var MEI=[
+ {t:"Célula de la gónada, diploide",x:"Una ovogonia (en el ovario) o una espermatogonia (en el testículo), con 46 cromosomas. Solo estas células hacen meiosis.",d:function(p){celula(p,300,150,110,95,"gon","ovogonia o espermatogonia · 46");nucleo4(p,300,150);}},
+ {t:"Duplica su material genético",x:"Igual que en la mitosis, primero se copia cada cromosoma.",d:function(p){celula(p,300,150,110,95,"gon","46 cromosomas duplicados");dup(p,250,150,m1,m1);dup(p,288,150,p1,p1);dup(p,326,150,m2,m2);dup(p,364,150,p2,p2);}},
+ {t:"Entrecruzamiento",x:"Los cromosomas homólogos (el materno y el paterno de cada par) se alinean juntos e intercambian fragmentos de ADN. Por eso aparecen cromosomas con un tramo del otro color: ya no son ni «puro mamá» ni «puro papá».",d:function(p){celula(p,300,150,130,100,"gon","los pares se alinean e intercambian");var g1=el("g",{},p);dup(g1,262,150,m1,m1x);dup(g1,292,150,p1x,p1);var g2=el("g",{},p);dup(g2,340,150,m2,m2x);dup(g2,370,150,p2x,p2);
+   var r=el("rect",{x:240,y:92,width:74,height:116,rx:12,fill:"none",stroke:"#C97686","stroke-width":2,"stroke-dasharray":"5 4"},p);tocable(r,"ent");var r2=el("rect",{x:318,y:110,width:74,height:80,rx:12,fill:"none",stroke:"#C97686","stroke-width":2,"stroke-dasharray":"5 4"},p);tocable(r2,"ent");tx(p,300,40,"entrecruzamiento","cel");}},
+ {t:"Primera división",x:"Se separan los pares: cada célula recibe uno de cada par (todavía duplicado). Ya quedan con la mitad de los cromosomas.",d:function(p){celula(p,160,150,100,85,"gon","1.ª división");dup(p,140,150,m1,m1x);dup(p,180,150,p2x,p2);celula(p,440,150,100,85,"gon","1.ª división");dup(p,420,150,p1x,p1);dup(p,460,150,m2,m2x);}},
+ {t:"Segunda división: cuatro gametos",x:"Se separan las copias. Resultan cuatro células haploides, con 23 cromosomas cada una: los gametos (ovocitos o espermatozoides). Fijate que las cuatro son distintas. En la fecundación, un gameto de 23 se une con otro de 23 y se forma una célula diploide de 46.",d:function(p){var X=[80,225,375,520],G=[[m1,p2x],[m1x,p2],[p1x,m2],[p1,m2x]];X.forEach(function(x,i){celula(p,x,150,62,70,"hap",i===0?"23 · haploide":"23");cromo(p,x-12,150,G[i][0]);cromo(p,x+12,150,G[i][1]);});tx(p,300,40,"cuatro gametos, todos distintos","cel");}}
+];
+
+/* ---------- Pasos ---------- */
+var modo="mit",paso=0,timer=null,rango=document.getElementById("rango");
+function lista(){return modo==="mei"?MEI:MIT;}
+function pintar(){var L=lista(),s=L[paso];if(capa)svg.removeChild(capa);capa=el("g",{"class":"paso"},svg);
+ tx(capa,16,24,modo==="mei"?"Meiosis":"Mitosis","lbl");s.d(capa);
+ document.getElementById("numP").textContent=(modo==="mei"?"Meiosis":"Mitosis")+" · paso "+(paso+1)+" de "+L.length;
+ document.getElementById("titP").textContent=s.t;document.getElementById("txtP").textContent=s.x;
+ rango.max=L.length-1;rango.value=paso;}
+function ir(i){paso=Math.max(0,Math.min(lista().length-1,i));pintar();}
+function stop(){if(timer){clearInterval(timer);timer=null;}document.querySelector('[data-a="play"]').textContent="▶ Reproducir";}
+Array.prototype.forEach.call(document.querySelectorAll("[data-a]"),function(b){b.addEventListener("click",function(){var a=b.dataset.a;
+ if(a==="play"){if(timer){stop();return;}if(paso>=lista().length-1)ir(0);b.textContent="⏸ Pausa";timer=setInterval(function(){if(paso>=lista().length-1){stop();return;}ir(paso+1);},3200);return;}
+ stop();if(a==="ini")ir(0);if(a==="ant")ir(paso-1);if(a==="sig")ir(paso+1);});});
+rango.addEventListener("input",function(){stop();ir(+rango.value);});
+
+/* ---------- Pestañas ---------- */
+var tabs=document.querySelectorAll(".tab");
+Array.prototype.forEach.call(tabs,function(t){t.addEventListener("click",function(){
+ Array.prototype.forEach.call(tabs,function(o){o.setAttribute("aria-selected",o===t?"true":"false");});
+ stop();var cmp=t.dataset.tab==="cmp";document.getElementById("cmp").hidden=!cmp;document.getElementById("esc").hidden=cmp;
+ if(!cmp){modo=t.dataset.tab;ir(0);}});});
+
+/* ---------- Práctica ---------- */
+var Q=[
+ ["Ocurre en todas las células del cuerpo.","mit","Las células somáticas se dividen por mitosis."],
+ ["Da cuatro células.","mei","De una célula de 46 salen cuatro de 23."],
+ ["Las células hijas son idénticas a la célula madre.","mit","Son «clones», sin variabilidad."],
+ ["Hay entrecruzamiento.","mei","Los pares se alinean e intercambian fragmentos: es la fuente de variabilidad."],
+ ["Parte de células diploides y genera células haploides.","mei","Es la pregunta 23 del 1.er parcial."],
+ ["Sirve para crecer y regenerar tejidos.","mit","Mantiene los 46 cromosomas en cada célula hija."],
+ ["Tiene dos divisiones sucesivas.","mei","La mitosis tiene una sola."],
+ ["Solo ocurre en ovarios y testículos.","mei","En ovogonias y espermatogonias."]
+];
+var qz=document.getElementById("quiz"),aciertos=0,resp=0;
+Q.forEach(function(q){var d=document.createElement("div");d.className="preg";d.innerHTML="<p>"+q[0]+"</p>";
+ var f=document.createElement("div");f.className="controles";f.style.marginTop="0";var dev=document.createElement("div");dev.className="dev";dev.setAttribute("aria-live","polite");
+ [["mit","Mitosis"],["mei","Meiosis"]].forEach(function(o){var b=document.createElement("button");b.type="button";b.className="btn sec";b.textContent=o[1];
+  b.addEventListener("click",function(){if(d.dataset.r)return;d.dataset.r=1;resp++;var ok=o[0]===q[1];if(ok)aciertos++;
+   dev.innerHTML='<strong class="'+(ok?"ok":"mal")+'">'+(ok?"Bien.":"Es "+(q[1]==="mit"?"mitosis":"meiosis")+".")+"</strong> "+q[2];
+   Array.prototype.forEach.call(f.querySelectorAll("button"),function(x){x.disabled=true;});
+   document.getElementById("puntaje").textContent=aciertos+" de "+resp+" respondidas"+(resp===Q.length?" · terminaste las "+Q.length+".":"");});f.appendChild(b);});
+ d.appendChild(f);d.appendChild(dev);qz.appendChild(d);});
+
+ir(0);
+})();
+</script>
+</body>
+</html>
